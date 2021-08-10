@@ -47,6 +47,10 @@ target_link_libraries(FF3.elf
   OpenSLES
   sndfile
   SDL
+  SDL_image
+  png
+  webp
+  jpeg
   SceHid_stub
   z
   -Wl,--whole-archive

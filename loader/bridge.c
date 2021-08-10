@@ -1,13 +1,16 @@
 #include "bridge.h"
 #include <limits.h>
 #include <psp2/kernel/processmgr.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <SDL/SDL_image.h>
+
 #include "zlib.h"
 
-#define SAVE_FILENAME "uxO:/data/ff3"
+#define SAVE_FILENAME "ux0:/data/ff3"
 #define OBB_FILE                                                               \
   "ux0:/data/ff3/main.20004.com.square_enix.android_googleplay.FFIII_GP.obb"
 
@@ -49,7 +52,7 @@ unsigned char *gzipRead(unsigned char *bArr, int *bArr_length) {
   return bArr2;
 }
 
-unsigned char *m476a(char *str, int* file_length) {
+unsigned char *m476a(char *str, int *file_length) {
   printf("READ %s \n", str);
   int i;
 
@@ -110,8 +113,6 @@ unsigned char *m476a(char *str, int* file_length) {
   return a4;
 }
 
-
-
 int readHeader() {
   const char *a = OBB_FILE;
   FILE *fp = fopen(a, "r");
@@ -162,12 +163,10 @@ int readHeader() {
 }
 
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
-    /*FILE *f = fopen("ux0:/data/decodeString.data", "wb");
-                fwrite(bArr, sizeof(unsigned char), *bArr_length, f);
-                fclose(f);
-                exit(1);*/
-
-
+  /*FILE *f = fopen("ux0:/data/decodeString.data", "wb");
+              fwrite(bArr, sizeof(unsigned char), *bArr_length, f);
+              fclose(f);
+              exit(1);*/
 
   int i = 5; // TODO
   if (i >= 6) {
@@ -216,7 +215,7 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
     i8 += 12;
     i7++;
   }
- 
+
   unsigned char *bArr4 = malloc(i6);
   memcpy(bArr4, bArr3, i6);
   // System.arraycopy(bArr3, 0, bArr4, 0, i6);
@@ -225,13 +224,13 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
   return bArr4;
 }
 
-jni_array *loadFile(char *str) {
+jni_bytearray *loadFile(char *str) {
   char *lang[] = {"ja", "en",    "fr",    "de", "it",
                   "es", "zh_CN", "zh_TW", "ko", "th"};
 
   char *substring = strrchr(str, 46);
 
-  substring = substring == NULL? str : substring;
+  substring = substring == NULL ? str : substring;
   char temp_path[512];
   int file_length;
   sprintf(temp_path, "%s.lproj/%s", lang[5], str);
@@ -244,7 +243,7 @@ jni_array *loadFile(char *str) {
     return NULL;
   }
 
-  jni_array *result = malloc(sizeof(jni_array));
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
   result->elements = a;
   result->size = file_length;
 
@@ -263,16 +262,40 @@ jni_array *loadFile(char *str) {
   return result;
 }
 
-jni_array * getSaveFileName(){
+jni_bytearray *loadRawFile(char *str) {
 
-  char * buffer = SAVE_FILENAME;
-  jni_array *result = malloc(sizeof(jni_array));
+  int file_length;
+  unsigned char *a = m476a(str, &file_length);
+
+  if (a == NULL) {
+    return NULL;
+  }
+
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
+  result->elements = a;
+  result->size = file_length;
+
+  return result;
+}
+
+jni_bytearray *getSaveFileName() {
+
+  char *buffer = SAVE_FILENAME;
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
   result->elements = malloc(strlen(buffer) + 1);
   // Sets the value
   strcpy(result->elements, buffer);
   result->size = strlen(buffer) + 1;
 
   return result;
+}
+
+void createSaveFile(size_t size) {
+  char *buffer = malloc(size);
+  FILE *fd = fopen(SAVE_FILENAME "/save.bin", "wb");
+  fwrite(buffer, sizeof(char), size, fd);
+  fclose(fd);
+  free(buffer);
 }
 
 long getCurrentFrame(long j) {
@@ -287,3 +310,27 @@ long getCurrentFrame(long j) {
     sceKernelGetProcessTime(&ticks);
   }
 }
+
+jni_intarray *loadTexture(jni_bytearray *bArr) {
+
+  SDL_RWops *rw = SDL_RWFromMem(bArr->elements, bArr->size);
+  SDL_Surface *temp = IMG_Load_RW(rw, 1);
+  jni_intarray *texture = malloc(sizeof(jni_intarray));
+
+  texture->size = temp->h * temp->w + 2;
+  texture->elements = malloc(texture->size * sizeof(int));
+  texture->elements[0] = temp->h;
+  texture->elements[1] = temp->w;
+
+  for (int n = 0; n < texture->size - 2; n++) {
+    texture->elements[2 + n] = __builtin_bswap32(((uint32_t *)temp->pixels)[n]);
+  }
+
+  SDL_FreeSurface(temp);
+
+  printf("loadTexture %d %d\n", texture->elements[0], texture->elements[1]);
+
+  return texture;
+}
+
+int isDeviceAndroidTV() { return 1; }

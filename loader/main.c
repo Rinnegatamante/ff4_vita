@@ -120,8 +120,12 @@ enum MethodIDs {
   UNKNOWN = 0,
   GET_CURRENT_FRAME, /**/
   LOAD_FILE,         /**/
+  LOAD_RAW_FILE,
   GET_LANGUAGE,
   GET_SAVEFILENAME,
+  CREATE_SAVEFILE,
+  LOAD_TEXTURE,
+  IS_DEVICE_ANDROID_TV,
   GET_CONTEXT,
   GET_WINDOW_MANAGER,
   GET_DEFAULT_DISPLAY,
@@ -140,8 +144,12 @@ typedef struct {
 static NameToMethodID name_to_method_ids[] = {
     {"getCurrentFrame", GET_CURRENT_FRAME},
     {"loadFile", LOAD_FILE},
+    {"loadRawFile", LOAD_RAW_FILE},
     {"getLanguage", GET_LANGUAGE},
     {"getSaveFileName", GET_SAVEFILENAME},
+    {"createSaveFile", CREATE_SAVEFILE},
+    {"loadTexture", LOAD_TEXTURE},
+    {"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
     {"getContext", GET_CONTEXT},
     {"getWindowManager", GET_WINDOW_MANAGER},
     {"getDefaultDisplay", GET_DEFAULT_DISPLAY},
@@ -178,7 +186,12 @@ int GetStaticMethodID(void *env, void *class, const char *name,
 }
 
 int CallBooleanMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
-  return 0;
+  switch (methodID) {
+  case IS_DEVICE_ANDROID_TV:
+    return isDeviceAndroidTV();
+  default:
+    return 0;
+  }
 }
 
 float CallFloatMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
@@ -202,8 +215,12 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case LOAD_FILE:
     return loadFile((char *)args[0]);
+  case LOAD_RAW_FILE:
+    return loadRawFile((char *)args[0]);
   case GET_SAVEFILENAME:
     return getSaveFileName();
+  case LOAD_TEXTURE:
+    return loadTexture((jni_bytearray *)args[0]);
   case HAS_TOUCHSCREEN:
     return 0;
   default:
@@ -212,7 +229,14 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
 }
 
 void CallStaticVoidMethodV(void *env, void *obj, int methodID,
-                           uintptr_t *args) {}
+                           uintptr_t *args) {
+  switch (methodID) {
+  case CREATE_SAVEFILE:
+    createSaveFile((size_t)args[0]);
+  default:
+    return;
+  }
+}
 
 int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
                              uintptr_t *args) {
@@ -226,7 +250,8 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
   }
 }
 
-long CallStaticLongMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
+long CallStaticLongMethodV(void *env, void *obj, int methodID,
+                           uintptr_t *args) {
   switch (methodID) {
   case GET_CURRENT_FRAME:
     return getCurrentFrame((long)args[0]);
@@ -240,7 +265,6 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   case GET_SCREEN_HEIGHT_PIXEL:
     return SCREEN_H;
   case GET_LANGUAGE:
-    printf("%d \n", 5);
     return 5;
   default:
     return 0;
@@ -288,21 +312,46 @@ int GetFieldID(void *env, void *clazz, const char *name, const char *sig) {
 
 int GetFloatField(void *env, void *obj, int fieldID) { return 0; }
 
-int GetArrayLength(void *env, jni_array *obj) {
+int GetArrayLength(void *env, jni_bytearray *obj) {
   printf("GetArrayLength %p %d \n", obj, obj->size);
   return obj->size;
 }
 
-void *GetByteArrayElements(void *env, jni_array *obj) {
-  printf("GetByteArrayElements %p \n", obj);
+void *GetByteArrayElements(void *env, jni_bytearray *obj) {
+  printf("GetByteArrayElements %p \n", obj->elements);
   return obj->elements;
 }
 
-int ReleaseByteArrayElements(void *env, jni_array *obj) {
+void *NewByteArray(void *env, size_t length) {
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
+  result->elements = malloc(length);
+  result->size = length;
+  printf("NewByteArray %d \n", (length));
+  return result;
+}
+
+void *GetIntArrayElements(void *env, jni_intarray *obj) {
+  printf("GetIntArrayElements %p \n", obj);
+  return obj->elements;
+}
+
+int ReleaseByteArrayElements(void *env, jni_bytearray *obj) {
   printf("ReleaseByteArrayElements %p \n", obj);
   free(obj->elements);
   free(obj);
   return 0;
+}
+
+int ReleaseIntArrayElements(void *env, jni_intarray *obj) {
+  printf("ReleaseIntArrayElements %p \n", obj);
+  free(obj->elements);
+  free(obj);
+  return 0;
+}
+
+void SetByteArrayRegion(void *env, jni_bytearray *array, size_t start,
+                        size_t len, const unsigned char *buf) {
+  memcpy(array->elements, &buf[start], len);
 }
 
 static char fake_env[0x1000];
@@ -338,8 +387,12 @@ void InitJNIEnv(void) {
   *(uintptr_t *)(fake_env + 0x2A4) = (uintptr_t)GetStringUTFChars;
   *(uintptr_t *)(fake_env + 0x2A8) = (uintptr_t)ret0; // ReleaseStringUTFChars
   *(uintptr_t *)(fake_env + 0x2AC) = (uintptr_t)GetArrayLength;
-  *(uintptr_t *)(fake_env + 0x2e0) = (uintptr_t)GetByteArrayElements;
+  *(uintptr_t *)(fake_env + 0x2E0) = (uintptr_t)GetByteArrayElements;
+  *(uintptr_t *)(fake_env + 0x2C0) = (uintptr_t)NewByteArray;
+  *(uintptr_t *)(fake_env + 0x2EC) = (uintptr_t)GetIntArrayElements;
   *(uintptr_t *)(fake_env + 0x300) = (uintptr_t)ReleaseByteArrayElements;
+  *(uintptr_t *)(fake_env + 0x30C) = (uintptr_t)ReleaseIntArrayElements;
+  *(uintptr_t *)(fake_env + 0x340) = (uintptr_t)SetByteArrayRegion;
 
   // *(uintptr_t *)(fake_env + 0x35C) = (uintptr_t)RegisterNatives;
   *(uintptr_t *)(fake_env + 0x374) = (uintptr_t)GetStringUTFRegion;
@@ -485,11 +538,6 @@ char *getcwd(char *buf, size_t size) {
   return NULL;
 }
 
-void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
-              GLfloat nearVal, GLfloat farVal) {
-  glOrtho(left, right, bottom, top, nearVal, farVal);
-}
-
 static int audio_port = 0;
 
 void SetShortArrayRegion(void *env, int array, size_t start, size_t len,
@@ -519,7 +567,7 @@ int main_thread(SceSize args, void *argp) {
 }
 
 void patch_game(void) {
-  
+
   /**(int *)so_symbol(&ff3_mod, "_ZN3krm3sal12SCREEN_WIDTHE") = SCREEN_W;
   *(int *)so_symbol(&ff3_mod, "_ZN3krm3sal13SCREEN_HEIGHTE") = SCREEN_H;
 
@@ -609,7 +657,43 @@ int munmap(void *addr, size_t length) {
   return 0;
 }
 
+void *AAssetManager_open(void *mgr, const char *filename, int mode) {
+  printf("AAssetManager_open\n");
+  return NULL;
+}
+
+void *AAsset_close() {
+  printf("AAsset_close\n");
+  return NULL;
+}
+
+void *AAssetManager_fromJava() {
+  printf("AAssetManager_fromJava\n");
+  return NULL;
+}
+
+void *AAsset_read() {
+  printf("AAsset_read\n");
+  return NULL;
+}
+
+void *AAsset_seek() {
+  printf("AAsset_seek\n");
+  return NULL;
+}
+
+void *AAsset_getLength() {
+  printf("AAsset_getLength\n");
+  return NULL;
+}
+
 static DynLibFunction dynlib_functions[] = {
+    {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
+    {"AAsset_close", (uintptr_t)&AAsset_close},
+    {"AAssetManager_fromJava", (uintptr_t)&AAssetManager_fromJava},
+    {"AAsset_read", (uintptr_t)&AAsset_read},
+    {"AAsset_seek", (uintptr_t)&AAsset_seek},
+    {"AAsset_getLength", (uintptr_t)&AAsset_getLength},
     {"SL_IID_ANDROIDSIMPLEBUFFERQUEUE",
      (uintptr_t)&SL_IID_ANDROIDSIMPLEBUFFERQUEUE},
     {"SL_IID_AUDIOIODEVICECAPABILITIES",
