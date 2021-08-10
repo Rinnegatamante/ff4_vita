@@ -121,6 +121,7 @@ enum MethodIDs {
   GET_CURRENT_FRAME, /**/
   LOAD_FILE,         /**/
   GET_LANGUAGE,
+  GET_SAVEFILENAME,
   GET_CONTEXT,
   GET_WINDOW_MANAGER,
   GET_DEFAULT_DISPLAY,
@@ -140,6 +141,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"getCurrentFrame", GET_CURRENT_FRAME},
     {"loadFile", LOAD_FILE},
     {"getLanguage", GET_LANGUAGE},
+    {"getSaveFileName", GET_SAVEFILENAME},
     {"getContext", GET_CONTEXT},
     {"getWindowManager", GET_WINDOW_MANAGER},
     {"getDefaultDisplay", GET_DEFAULT_DISPLAY},
@@ -200,6 +202,8 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case LOAD_FILE:
     return loadFile((char *)args[0]);
+  case GET_SAVEFILENAME:
+    return getSaveFileName();
   case HAS_TOUCHSCREEN:
     return 0;
   default:

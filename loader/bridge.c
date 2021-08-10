@@ -7,6 +7,7 @@
 
 #include "zlib.h"
 
+#define SAVE_FILENAME "uxO:/data/ff3"
 #define OBB_FILE                                                               \
   "ux0:/data/ff3/main.20004.com.square_enix.android_googleplay.FFIII_GP.obb"
 
@@ -258,6 +259,18 @@ jni_array *loadFile(char *str) {
 
   result->elements = b;
   result->size = file_length;
+
+  return result;
+}
+
+jni_array * getSaveFileName(){
+
+  char * buffer = SAVE_FILENAME;
+  jni_array *result = malloc(sizeof(jni_array));
+  result->elements = malloc(strlen(buffer) + 1);
+  // Sets the value
+  strcpy(result->elements, buffer);
+  result->size = strlen(buffer) + 1;
 
   return result;
 }
