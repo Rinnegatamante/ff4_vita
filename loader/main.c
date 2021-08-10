@@ -18,6 +18,9 @@
 #include <vitaGL.h>
 #include <vitashark.h>
 
+#include <OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
 #include <malloc.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -469,74 +472,6 @@ int pthread_once_fake(volatile int *once_control, void (*init_routine)(void)) {
 }
 
 int gettid(void) { return sceKernelGetThreadId(); }
-
-int SL_IID_ANDROIDSIMPLEBUFFERQUEUE;
-int SL_IID_AUDIOIODEVICECAPABILITIES;
-int SL_IID_BUFFERQUEUE;
-int SL_IID_DYNAMICSOURCE;
-int SL_IID_ENGINE;
-int SL_IID_LED;
-int SL_IID_NULL;
-int SL_IID_METADATAEXTRACTION;
-int SL_IID_METADATATRAVERSAL;
-int SL_IID_OBJECT;
-int SL_IID_OUTPUTMIX;
-int SL_IID_PLAY;
-int SL_IID_VIBRA;
-int SL_IID_VOLUME;
-int SL_IID_PREFETCHSTATUS;
-int SL_IID_PLAYBACKRATE;
-int SL_IID_SEEK;
-int SL_IID_RECORD;
-int SL_IID_EQUALIZER;
-int SL_IID_DEVICEVOLUME;
-int SL_IID_PRESETREVERB;
-int SL_IID_ENVIRONMENTALREVERB;
-int SL_IID_EFFECTSEND;
-int SL_IID_3DGROUPING;
-int SL_IID_3DCOMMIT;
-int SL_IID_3DLOCATION;
-int SL_IID_3DDOPPLER;
-int SL_IID_3DSOURCE;
-int SL_IID_3DMACROSCOPIC;
-int SL_IID_MUTESOLO;
-int SL_IID_DYNAMICINTERFACEMANAGEMENT;
-int SL_IID_MIDIMESSAGE;
-int SL_IID_MIDIMUTESOLO;
-int SL_IID_MIDITEMPO;
-int SL_IID_MIDITIME;
-int SL_IID_AUDIODECODERCAPABILITIES;
-int SL_IID_AUDIOENCODERCAPABILITIES;
-int SL_IID_AUDIOENCODER;
-int SL_IID_BASSBOOST;
-int SL_IID_PITCH;
-int SL_IID_RATEPITCH;
-int SL_IID_VIRTUALIZER;
-int SL_IID_VISUALIZATION;
-int SL_IID_ENGINECAPABILITIES;
-int SL_IID_THREADSYNC;
-int SL_IID_ANDROIDEFFECT;
-int SL_IID_ANDROIDEFFECTSEND;
-int SL_IID_ANDROIDEFFECTCAPABILITIES;
-int SL_IID_ANDROIDCONFIGURATION;
-
-static int (*funcs[10])();
-static void *p_funcs;
-int slCreateEngine(uintptr_t *obj) {
-  *obj = (uintptr_t)&p_funcs;
-  p_funcs = funcs;
-  funcs[0] = ret0;
-  funcs[1] = ret0;
-  funcs[2] = ret0;
-  funcs[3] = ret0;
-  funcs[4] = ret0;
-  funcs[5] = ret0;
-  funcs[6] = ret0;
-  funcs[7] = ret0;
-  funcs[8] = ret0;
-  funcs[9] = ret0;
-  return 0;
-}
 
 char *getcwd(char *buf, size_t size) {
   if (buf) {

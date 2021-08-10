@@ -44,6 +44,10 @@ target_link_libraries(FF3.elf
   ScePower_stub
   SceTouch_stub
   SceVshBridge_stub
+  OpenSLES
+  sndfile
+  SDL
+  SceHid_stub
   z
   -Wl,--whole-archive
   pthread
