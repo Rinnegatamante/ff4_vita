@@ -545,6 +545,27 @@ void SetShortArrayRegion(void *env, int array, size_t start, size_t len,
   sceAudioOutOutput(audio_port, buf);
 }
 
+int this_width;
+int this_height;
+
+void setup_viewport(int width, int height){
+        int i3 = width * 3;
+        if (i3 >= height * 4) {
+            this_height = height;
+            this_width = width;
+            if (this_width > (this_height * 21) / 9) {
+                this_width = (this_height * 21) / 9;
+            }
+        } else {
+            this_width = width;
+            this_height = i3 / 4;
+        }
+        int x = (width - this_width) / 2;
+        int y = (height - this_height) / 2;
+        glViewport(x, y, this_width, this_height);
+
+}
+
 int main_thread(SceSize args, void *argp) {
   vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE,
                                 SHARK_ENABLE);
@@ -557,9 +578,10 @@ int main_thread(SceSize args, void *argp) {
       (void *)so_symbol(&ff3_mod, "render");
 
   readHeader();
+  setup_viewport(SCREEN_W, SCREEN_H);
 
   while (1) {
-    ff3_render(fake_env, 0, 544, 960, 1);
+    ff3_render(fake_env, 0, this_width, this_height, 0);
     vglSwapBuffers(GL_FALSE);
   }
 
