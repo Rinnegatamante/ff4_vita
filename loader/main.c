@@ -250,11 +250,11 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
   }
 }
 
-long CallStaticLongMethodV(void *env, void *obj, int methodID,
+uint64_t CallStaticLongMethodV(void *env, void *obj, int methodID,
                            uintptr_t *args) {
   switch (methodID) {
   case GET_CURRENT_FRAME:
-    return getCurrentFrame((long)args[0]);
+    return getCurrentFrame((uint64_t)args[0]);
   default:
     return 0;
   }

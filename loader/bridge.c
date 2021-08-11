@@ -298,16 +298,14 @@ void createSaveFile(size_t size) {
   free(buffer);
 }
 
-long getCurrentFrame(long j) {
-  SceKernelSysClock ticks;
-  sceKernelGetProcessTime(&ticks);
+uint64_t getCurrentFrame(uint64_t j) {
+
   while (1) {
-    long j2 = ticks * 1000 * 3 / 100;
+    uint64_t j2 = sceKernelGetProcessTimeWide() / 1000000;
     if (j2 != j) {
       return j2;
     }
     sceKernelDelayThread(10);
-    sceKernelGetProcessTime(&ticks);
   }
 }
 
@@ -319,11 +317,13 @@ jni_intarray *loadTexture(jni_bytearray *bArr) {
 
   texture->size = temp->h * temp->w + 2;
   texture->elements = malloc(texture->size * sizeof(int));
-  texture->elements[0] = temp->h;
-  texture->elements[1] = temp->w;
+  texture->elements[0] = temp->w;
+  texture->elements[1] = temp->h;
 
-  for (int n = 0; n < texture->size - 2; n++) {
-    texture->elements[2 + n] = __builtin_bswap32(((uint32_t *)temp->pixels)[n]);
+  for (int n = 0; n < temp->h; n++) {
+      for (int m = 0; m < temp->w; m++) {
+        texture->elements[2 + n*temp->w + m] = (((uint32_t *)temp->pixels)[n*temp->pitch+m]);
+      }
   }
 
   SDL_FreeSurface(temp);

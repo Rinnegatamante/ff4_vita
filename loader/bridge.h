@@ -13,7 +13,7 @@ jni_bytearray *loadFile(char *str);
 jni_bytearray *loadRawFile(char *str);
 jni_bytearray *getSaveFileName();
 void createSaveFile(size_t size);
-long getCurrentFrame(long j);
+uint64_t getCurrentFrame(uint64_t j);
 int readHeader();
 
 typedef struct {
