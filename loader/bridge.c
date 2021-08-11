@@ -309,6 +309,8 @@ uint64_t getCurrentFrame(uint64_t j) {
   }
 }
 
+#define RGBA8(r,g,b,a) ((((a)&0xFF)<<24) | (((b)&0xFF)<<16) | (((g)&0xFF)<<8) | (((r)&0xFF)<<0))
+
 jni_intarray *loadTexture(jni_bytearray *bArr) {
 
   SDL_RWops *rw = SDL_RWFromMem(bArr->elements, bArr->size);
@@ -322,7 +324,8 @@ jni_intarray *loadTexture(jni_bytearray *bArr) {
 
   for (int n = 0; n < temp->h; n++) {
       for (int m = 0; m < temp->w; m++) {
-        texture->elements[2 + n*temp->w + m] = (((uint32_t *)temp->pixels)[n*temp->pitch+m]);
+        unsigned char * color = (unsigned char *)&(((uint32_t *)temp->pixels)[n*temp->pitch+m]);
+        texture->elements[2 + n*temp->w + m] = RGBA8(color[2],color[1],color[0],color[3]);
       }
   }
 
