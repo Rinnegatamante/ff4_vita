@@ -582,8 +582,24 @@ int main_thread(SceSize args, void *argp) {
 
   readHeader();
   setup_viewport(SCREEN_W, SCREEN_H);
-
   while (1) {
+
+    SceTouchData touch;
+    float coordinates[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    int n;
+
+    sceTouchPeek(0, &touch, 1);
+
+    int reportNum = touch.reportNum > 2 ? 2 : touch.reportNum;
+
+    for (n = 0; n < reportNum; n++) {
+      coordinates[n * 2] = touch.report[n].x / SCREEN_W;
+      coordinates[n * 2 + 1] = touch.report[n].y / SCREEN_H;
+    }
+
+    ff3_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
+              coordinates[2], coordinates[3], 0);
+
     ff3_render(fake_env, 0, this_width, this_height, 0);
     vglSwapBuffers(GL_FALSE);
   }
