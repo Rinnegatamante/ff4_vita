@@ -579,6 +579,8 @@ int main_thread(SceSize args, void *argp) {
 
   int (*ff3_render)(char *, int, int, int, int) =
       (void *)so_symbol(&ff3_mod, "render");
+  int (*ff3_touch)(int, int, int, int, float, float, float, float,
+                   unsigned int) = (void *)so_symbol(&ff3_mod, "touch");
 
   readHeader();
   setup_viewport(SCREEN_W, SCREEN_H);
