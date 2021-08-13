@@ -1,5 +1,6 @@
 #include "bridge.h"
 #include <limits.h>
+#include <math.h>
 #include <psp2/kernel/processmgr.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -7,6 +8,7 @@
 #include <string.h>
 
 #include "stb_image.h"
+#include "stb_truetype.h"
 
 #include "zlib.h"
 
@@ -340,3 +342,108 @@ jni_intarray *loadTexture(jni_bytearray *bArr) {
 }
 
 int isDeviceAndroidTV() { return 1; }
+
+stbtt_fontinfo *info = NULL;
+unsigned char *fontBuffer = NULL;
+
+void initFont() {
+
+  long size;
+
+  if (info != NULL)
+    return;
+
+  FILE *fontFile = fopen("ux0:/data/ff3/Roboto-Bold.ttf", "rb");
+  fseek(fontFile, 0, SEEK_END);
+  size = ftell(fontFile);       /* how long is the file ? */
+  fseek(fontFile, 0, SEEK_SET); /* reset */
+
+  fontBuffer = malloc(size);
+
+  fread(fontBuffer, size, 1, fontFile);
+  fclose(fontFile);
+
+  info = malloc(sizeof(stbtt_fontinfo));
+
+  /* prepare font */
+  if (!stbtt_InitFont(info, fontBuffer, 0)) {
+    printf("failed\n");
+  }
+}
+
+static inline uint32_t utf8_decode_unsafe_2(const char *data) {
+  uint32_t codepoint;
+
+  codepoint = ((data[0] & 0x1F) << 6);
+  codepoint |= (data[1] & 0x3F);
+
+  return codepoint;
+}
+
+jni_intarray *drawFont(char *word, int size, int i2, int i3) {
+  printf("%s %d %d %d\n", word, size, i2, i3);
+
+  initFont();
+
+  jni_intarray *texture = malloc(sizeof(jni_intarray));
+  texture->size = size * size + 5;
+  texture->elements = malloc(texture->size * sizeof(int));
+
+  int b_w = size; /* bitmap width */
+  int b_h = size; /* bitmap height */
+
+  /* create a bitmap for the phrase */
+  unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
+
+  /* calculate font scaling */
+  float scale = stbtt_ScaleForPixelHeight(info, size);
+
+  int x = 0;
+
+  int ascent, descent, lineGap;
+  stbtt_GetFontVMetrics(info, &ascent, &descent, &lineGap);
+
+  int i = 0;
+  while (word[i]) {
+    i++;
+  }
+
+  int codepoint =
+      i == 2 ? utf8_decode_unsafe_2(word) : word[0];
+
+  int ax;
+  int lsb;
+  stbtt_GetCodepointHMetrics(info, codepoint, &ax, &lsb);
+
+  if (codepoint == 32) {
+    texture->elements[0] = roundf(ax * scale);
+    return texture;
+  }
+
+  /* get bounding box for character (may be offset to account for chars that
+   * dip above or below the line */
+  int c_x1, c_y1, c_x2, c_y2;
+  stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1,
+                              &c_x2, &c_y2);
+
+  /* compute y (different characters have different heights */
+  int y = roundf(ascent * scale) + c_y1;
+
+  /* render character (stride and offset is important here) */
+  int byteOffset = x + roundf(lsb * scale) + (y * b_w);
+
+  printf("%d %d %d %d %d %d\n", x, y, c_x2, c_x1, c_y1, c_y2);
+  stbtt_MakeCodepointBitmap(info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1,
+                            b_w, scale, scale, codepoint);
+
+  texture->elements[0] = (c_x2 - c_x1 + x + roundf(lsb * scale));
+  texture->elements[1] = 0;
+  texture->elements[2] = 0;
+
+  for (int n = 0; n < size * size; n++) {
+    texture->elements[5 + n] =
+        RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
+  }
+
+  return texture;
+}

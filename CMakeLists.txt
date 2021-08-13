@@ -24,6 +24,8 @@ add_executable(FF3.elf
   loader/so_util.c
   loader/bridge.c
   loader/stb_image.c
+  loader/stb_truetype.c
+  loader/stb_image_write.c
 )
 
 target_link_libraries(FF3.elf
