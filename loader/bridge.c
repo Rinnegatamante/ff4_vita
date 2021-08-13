@@ -17,7 +17,7 @@
   "ux0:/data/ff3/main.20004.com.square_enix.android_googleplay.FFIII_GP.obb"
 
 unsigned char *header = NULL;
-unsigned int header_length = 0;
+int header_length = 0;
 
 void decodeArray(unsigned char *bArr, int size, uint key) {
   for (int n = 0; n < size; n++) {
@@ -47,7 +47,7 @@ unsigned char *gzipRead(unsigned char *bArr, int *bArr_length) {
 
   // the actual DE-compression work.
   inflateInit2(&infstream, MAX_WBITS | 16);
-  int ret = inflate(&infstream, Z_FULL_FLUSH);
+  inflate(&infstream, Z_FULL_FLUSH);
   inflateEnd(&infstream);
 
   *bArr_length = readInt;
@@ -106,6 +106,8 @@ unsigned char *m476a(char *str, int *file_length) {
        i7 += fread(&bArr2[i7], sizeof(unsigned char), *file_length - i7, fp)) {
   }
 
+  fclose(fp);
+
   decodeArray(bArr2, *file_length, a3 + 84861466u);
 
   unsigned char *a4 = gzipRead(bArr2, file_length);
@@ -149,10 +151,6 @@ int readHeader() {
 
     decodeArray(header, header_length, a2 + 84861466u);
 
-    /*        FILE *f = fopen("ux0:/data/header.data", "wb");
-            fwrite(header, sizeof(unsigned char), header_length, f);
-            fclose(f);*/
-
     unsigned char *header2 = gzipRead(header, &header_length);
 
     free(header);
@@ -165,12 +163,8 @@ int readHeader() {
 }
 
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
-  /*FILE *f = fopen("ux0:/data/decodeString.data", "wb");
-              fwrite(bArr, sizeof(unsigned char), *bArr_length, f);
-              fclose(f);
-              exit(1);*/
 
-  int i = 5; // TODO
+  int i = 5;
   if (i >= 6) {
     return bArr;
   }
@@ -286,7 +280,7 @@ jni_bytearray *getSaveFileName() {
   jni_bytearray *result = malloc(sizeof(jni_bytearray));
   result->elements = malloc(strlen(buffer) + 1);
   // Sets the value
-  strcpy(result->elements, buffer);
+  strcpy((char *)result->elements, buffer);
   result->size = strlen(buffer) + 1;
 
   return result;
@@ -408,8 +402,7 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
     i++;
   }
 
-  int codepoint =
-      i == 2 ? utf8_decode_unsafe_2(word) : word[0];
+  int codepoint = i == 2 ? utf8_decode_unsafe_2(word) : word[0];
 
   int ax;
   int lsb;

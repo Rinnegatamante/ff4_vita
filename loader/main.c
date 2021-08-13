@@ -163,26 +163,25 @@ static NameToMethodID name_to_method_ids[] = {
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
-  printf("GetMethodID %s\n", name);
 
   for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
        i++) {
     if (strcmp(name, name_to_method_ids[i].name) == 0)
       return name_to_method_ids[i].id;
   }
-
+  printf("GetMethodID %s\n", name);
   return UNKNOWN;
 }
 
 int GetStaticMethodID(void *env, void *class, const char *name,
                       const char *sig) {
-  printf("GetMethodID %s\n", name);
 
   for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
        i++) {
     if (strcmp(name, name_to_method_ids[i].name) == 0)
       return name_to_method_ids[i].id;
   }
+  printf("GetMethodID %s\n", name);
 
   return UNKNOWN;
 }
@@ -255,7 +254,7 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
 }
 
 uint64_t CallStaticLongMethodV(void *env, void *obj, int methodID,
-                           uintptr_t *args) {
+                               uintptr_t *args) {
   switch (methodID) {
   case GET_CURRENT_FRAME:
     return getCurrentFrame((uint64_t)args[0]);
@@ -552,21 +551,21 @@ void SetShortArrayRegion(void *env, int array, size_t start, size_t len,
 int this_width;
 int this_height;
 
-void setup_viewport(int width, int height){
-        int i3 = width * 3;
-        if (i3 >= height * 4) {
-            this_height = height;
-            this_width = width;
-            if (this_width > (this_height * 21) / 9) {
-                this_width = (this_height * 21) / 9;
-            }
-        } else {
-            this_width = width;
-            this_height = i3 / 4;
-        }
-        int x = (width - this_width) / 2;
-        int y = (height - this_height) / 2;
-        glViewport(x, y, this_width, this_height);
+void setup_viewport(int width, int height) {
+  int i3 = width * 3;
+  if (i3 >= height * 4) {
+    this_height = height;
+    this_width = width;
+    if (this_width > (this_height * 21) / 9) {
+      this_width = (this_height * 21) / 9;
+    }
+  } else {
+    this_width = width;
+    this_height = i3 / 4;
+  }
+  int x = (width - this_width) / 2;
+  int y = (height - this_height) / 2;
+  glViewport(x, y, this_width, this_height);
 
 }
 
@@ -1034,7 +1033,9 @@ int main(int argc, char *argv[]) {
 
   so_initialize(&ff3_mod);
 
-  SceUID thid = sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread, 0x40, 128 * 1024, 0, 0, NULL);
+  SceUID thid =
+      sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,
+                            0x40, 128 * 1024, 0, 0, NULL);
   sceKernelStartThread(thid, 0, NULL);
   return sceKernelExitDeleteThread(0);
 }
