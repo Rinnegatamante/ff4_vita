@@ -593,8 +593,8 @@ int main_thread(SceSize args, void *argp) {
     int reportNum = touch.reportNum > 2 ? 2 : touch.reportNum;
 
     for (n = 0; n < reportNum; n++) {
-      coordinates[n * 2] = touch.report[n].x / SCREEN_W;
-      coordinates[n * 2 + 1] = touch.report[n].y / SCREEN_H;
+      coordinates[n * 2] = (float)touch.report[n].x / 1920.0f;
+      coordinates[n * 2 + 1] = (float)touch.report[n].y / 1088.0f;
     }
 
     ff3_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
