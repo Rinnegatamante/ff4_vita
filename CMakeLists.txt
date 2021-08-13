@@ -23,6 +23,7 @@ add_executable(FF3.elf
   loader/dialog.c
   loader/so_util.c
   loader/bridge.c
+  loader/stb_image.c
 )
 
 target_link_libraries(FF3.elf
@@ -47,10 +48,6 @@ target_link_libraries(FF3.elf
   OpenSLES
   sndfile
   SDL
-  SDL_image
-  png
-  webp
-  jpeg
   SceHid_stub
   z
   -Wl,--whole-archive

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL/SDL_image.h>
+#include "stb_image.h"
 
 #include "zlib.h"
 
@@ -309,29 +309,32 @@ uint64_t getCurrentFrame(uint64_t j) {
   }
 }
 
-#define RGBA8(r,g,b,a) ((((a)&0xFF)<<24) | (((b)&0xFF)<<16) | (((g)&0xFF)<<8) | (((r)&0xFF)<<0))
+#define RGBA8(r, g, b, a)                                                      \
+  ((((a)&0xFF) << 24) | (((b)&0xFF) << 16) | (((g)&0xFF) << 8) |               \
+   (((r)&0xFF) << 0))
 
 jni_intarray *loadTexture(jni_bytearray *bArr) {
 
-  SDL_RWops *rw = SDL_RWFromMem(bArr->elements, bArr->size);
-  SDL_Surface *temp = IMG_Load_RW(rw, 1);
   jni_intarray *texture = malloc(sizeof(jni_intarray));
 
-  texture->size = temp->h * temp->w + 2;
-  texture->elements = malloc(texture->size * sizeof(int));
-  texture->elements[0] = temp->w;
-  texture->elements[1] = temp->h;
+  int x, y, channels_in_file;
+  unsigned char *temp = stbi_load_from_memory(bArr->elements, bArr->size, &x,
+                                              &y, &channels_in_file, 4);
 
-  for (int n = 0; n < temp->h; n++) {
-      for (int m = 0; m < temp->w; m++) {
-        unsigned char * color = (unsigned char *)&(((uint32_t *)temp->pixels)[n*temp->pitch+m]);
-        texture->elements[2 + n*temp->w + m] = RGBA8(color[2],color[1],color[0],color[3]);
-      }
+  texture->size = x * y + 2;
+  texture->elements = malloc(texture->size * sizeof(int));
+  texture->elements[0] = x;
+  texture->elements[1] = y;
+
+  for (int n = 0; n < y; n++) {
+    for (int m = 0; m < x; m++) {
+      unsigned char *color = (unsigned char *)&(((uint32_t *)temp)[n * x + m]);
+      texture->elements[2 + n * x + m] =
+          RGBA8(color[2], color[1], color[0], color[3]);
+    }
   }
 
-  SDL_FreeSurface(temp);
-
-  printf("loadTexture %d %d\n", texture->elements[0], texture->elements[1]);
+  free(temp);
 
   return texture;
 }
