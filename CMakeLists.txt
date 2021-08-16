@@ -50,6 +50,8 @@ target_link_libraries(FF3.elf
   sndfile
   SDL
   SceHid_stub
+  icudata
+  icuuc
   z
   -Wl,--whole-archive
   pthread
