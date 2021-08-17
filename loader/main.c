@@ -117,6 +117,8 @@ enum MethodIDs {
   LOAD_TEXTURE,
   IS_DEVICE_ANDROID_TV,
   DRAW_FONT,
+  CREATE_EDIT_TEXT,
+  GET_EDIT_TEXT,
   GET_CONTEXT,
   GET_WINDOW_MANAGER,
   GET_DEFAULT_DISPLAY,
@@ -142,6 +144,8 @@ static NameToMethodID name_to_method_ids[] = {
     {"loadTexture", LOAD_TEXTURE},
     {"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
     {"drawFont", DRAW_FONT},
+    {"createEditText", CREATE_EDIT_TEXT},
+    {"getEditText", GET_EDIT_TEXT},    
     {"getContext", GET_CONTEXT},
     {"getWindowManager", GET_WINDOW_MANAGER},
     {"getDefaultDisplay", GET_DEFAULT_DISPLAY},
@@ -214,8 +218,8 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
     return loadTexture((jni_bytearray *)args[0]);
   case DRAW_FONT:
     return drawFont((char *)args[0], args[1], args[2], args[3]);
-  case HAS_TOUCHSCREEN:
-    return 0;
+  case GET_EDIT_TEXT:
+    return getEditText();
   default:
     return NULL;
   }
@@ -226,6 +230,8 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case CREATE_SAVEFILE:
     createSaveFile((size_t)args[0]);
+  case CREATE_EDIT_TEXT:
+    createEditText((char *)args[0]);
   default:
     return;
   }

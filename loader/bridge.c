@@ -13,6 +13,9 @@
 #include "zlib.h"
 #include <unicode/ucnv.h>
 #include <unicode/ustring.h>
+#include <vitaGL.h>
+
+#include "dialog.h"
 
 #define SAVE_FILENAME "ux0:/data/ff3"
 #define OBB_FILE                                                               \
@@ -398,7 +401,6 @@ static inline uint32_t utf8_decode_unsafe_2(const char *data) {
 }
 
 jni_intarray *drawFont(char *word, int size, int i2, int i3) {
-  printf("%s %d %d %d\n", word, size, i2, i3);
 
   initFont();
 
@@ -461,4 +463,20 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   }
 
   return texture;
+}
+
+int editText = -1;
+
+void createEditText(char *str) { 
+  editText = init_ime_dialog("", str); 
+}
+
+char *getEditText() {
+  char *result = NULL;
+  while (!result && editText != -1) {
+    result = get_ime_dialog_result();
+    vglSwapBuffers(GL_TRUE);
+  }
+  editText = -1;
+  return result;
 }

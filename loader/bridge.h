@@ -23,5 +23,9 @@ typedef struct {
 
 jni_intarray *loadTexture(jni_bytearray *bArr);
 int isDeviceAndroidTV();
-jni_intarray *drawFont(char* str, int i, int i2, int i3);
+jni_intarray *drawFont(char *str, int i, int i2, int i3);
+
+void createEditText(char *str);
+char *getEditText();
+
 #endif
