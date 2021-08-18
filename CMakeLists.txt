@@ -63,9 +63,16 @@ vita_create_vpk(FF3.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE ${CMAKE_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
-       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+       ${CMAKE_SOURCE_DIR}/Roboto-Bold.ttf Roboto-Bold.ttf
+       ${CMAKE_SOURCE_DIR}/icudt59l/cnvalias.icu icudt59l/cnvalias.icu
+       ${CMAKE_SOURCE_DIR}/icudt59l/confusables.cfu icudt59l/confusables.cfu
+       ${CMAKE_SOURCE_DIR}/icudt59l/unames.icu icudt59l/unames.icu
+       ${CMAKE_SOURCE_DIR}/icudt59l/ibm-943_P15A-2003.cnv icudt59l/ibm-943_P15A-2003.cnv
+       ${CMAKE_SOURCE_DIR}/icudt59l/ibm-5348_P100-1997.cnv icudt59l/ibm-5348_P100-1997.cnv
+
 )
 
 add_custom_target(copy
