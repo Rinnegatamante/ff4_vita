@@ -172,16 +172,16 @@ void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
   UConverter *conv;
   int32_t len;
 
-  char *temp = malloc(length * 2);
+  uint16_t *temp = malloc(length * 3);
   u_setDataDirectory("app0:/");
   printf("%s\n", u_getDataDirectory());
   conv = ucnv_open(src_encoding, &status);
 
-  len = ucnv_toUChars(conv, temp, length * 2, src, length, &status);
+  len = ucnv_toUChars(conv, temp, length * 3, src, length, &status);
   ucnv_close(conv);
 
   conv = ucnv_open("utf-8", &status);
-  *dst_length_p = ucnv_fromUChars(conv, dst, length * 2, temp, len, &status);
+  *dst_length_p = ucnv_fromUChars(conv, dst, length * 3, temp, len, &status);
   ucnv_close(conv);
 
   free(temp);
@@ -189,60 +189,53 @@ void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
 
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 
-  int i = getCurrentLanguage();
-  if (i >= 6) {
+  int lang = getCurrentLanguage();
+  if (lang >= 6) {
     return bArr;
   }
 
-  unsigned char *bArr3 = malloc(*bArr_length * 2);
-  int i4 = (bArr[8] & 0xFF) | ((bArr[9] & 0xFF) << 8) |
-           ((bArr[10] & 0xFF) << 16) | ((bArr[11] & 0xFF) << 24);
-  int i5 = (i4 * 12) + 16;
+  unsigned char *utf8_strings = malloc(*bArr_length * 3);
 
-  memcpy(bArr3, bArr, i5);
+  int entry_number = *(int *)&bArr[8];
+  int header_length = (entry_number * 12) + 16;
 
-  int i6 = i5;
-  int i7 = 0;
-  int i8 = 16;
-  int i9 = 16;
+  memcpy(utf8_strings, bArr, header_length);
 
-  while (i7 < i4) {
-    int i10 = i8 + 8;
-    bArr3[i10 + 0] = (unsigned char)(i6 >> 0);
-    bArr3[i10 + 1] = (unsigned char)(i6 >> 8);
-    bArr3[i10 + 2] = (unsigned char)(i6 >> 16);
-    bArr3[i10 + 3] = (unsigned char)(i6 >> 24);
-    unsigned char b = bArr[i9 + 4];
-    int i11 = i9 + 8;
-    int i12 = ((bArr[i11 + 3] & 0xFF) << 24) | (bArr[i11 + 0] & 0xFF) |
-              ((bArr[i11 + 1] & 0xFF) << 8) | ((bArr[i11 + 2] & 0xFF) << 16);
-    int i13 = i6;
-    for (int i14 = 0; i14 < b; i14++) {
-      int i15 = 0;
-      while (bArr[i12 + i15] != 0) {
-        i15++;
+  int utf8_offset = header_length;
+  int entry_index = 0;
+  int entry_offset = 16;
+
+  while (entry_index < entry_number) {
+    *(int *)&utf8_strings[entry_offset + 8] = utf8_offset;
+
+    unsigned char string_number = bArr[entry_offset + 4];
+    int string_offset = *(int *)&bArr[entry_offset + 8];
+    for (int string_index = 0; string_index < string_number; string_index++) {
+      int string_length = 0;
+      while (bArr[string_offset + string_length] != 0) {
+        string_length++;
       }
-      int newLength = 0;
-      toUtf8(&bArr[i12], i15, &bArr3[i13],
-             i == 0 ? "shift_jis" : "windows-1252", &newLength);
+      unsigned int utf8_length = 0;
+      toUtf8((const char *)&bArr[string_offset], string_length,
+             (char *)&utf8_strings[utf8_offset],
+             lang == 0 ? "shift_jis" : "windows-1252", &utf8_length);
 
-      bArr3[newLength + i13] = 0;
+      utf8_strings[utf8_offset + utf8_length] = 0;
 
-      i12 += i15 + 1;
-      i13 += newLength + 1;
+      string_offset += string_length + 1;
+      utf8_offset += utf8_length + 1;
     }
-    i6 = i13 + 1;
-    bArr3[i13] = 0;
-    i9 += 12;
-    i8 += 12;
-    i7++;
+    utf8_offset = utf8_offset + 1;
+    utf8_strings[utf8_offset] = 0;
+    entry_offset += 12;
+    entry_index++;
   }
 
-  unsigned char *bArr4 = malloc(i6);
-  memcpy(bArr4, bArr3, i6);
-  free(bArr3);
-  *bArr_length = i6;
-  return bArr4;
+  unsigned char *final_strings = malloc(utf8_offset);
+  memcpy(final_strings, utf8_strings, utf8_offset);
+  free(utf8_strings);
+  *bArr_length = utf8_offset;
+  return final_strings;
 }
 
 jni_bytearray *loadFile(char *str) {
@@ -275,7 +268,8 @@ jni_bytearray *loadFile(char *str) {
 
   unsigned char *b = decodeString(a, &file_length);
 
-  free(a);
+  if (b != a)
+    free(a);
 
   result->elements = b;
   result->size = file_length;
@@ -494,7 +488,7 @@ int getCurrentLanguage() {
   case SCE_SYSTEM_PARAM_LANG_ITALIAN:
     return 4;
   case SCE_SYSTEM_PARAM_LANG_SPANISH:
-    return 5;
+    return 4;
   default:
     return 1;
   }
