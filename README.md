@@ -1,10 +1,10 @@
-# Battlefield: Bad Company 2 Vita
+# Final Fantasy 3 Vita
 
 <p align="center"><img src="./screenshots/game.png"></p>
 
-This is a wrapper/port of *Battlefield: Bad Company 2 Android* for the *PS Vita*.
+This is a wrapper/port of *Final Fantasy 3 Android* for the *PS Vita*.
 
-The port works by loading the official Android ARMv6 executable in memory, resolving its imports with native functions and patching it in order to properly run.
+The port works by loading the official Android ARMv7 executable in memory, resolving its imports with native functions and patching it in order to properly run.
 
 ## Setup Instructions (For End Users)
 
@@ -22,10 +22,10 @@ In order to properly install the game, you'll have to follow these steps precise
 
 - **Optional**: Install [PSVshell](https://github.com/Electry/PSVshell/releases) to overclock your device to 500Mhz.
 - Install `libshacccg.suprx`, if you don't have it already, by following [this guide](https://samilops2.gitbook.io/vita-troubleshooting-guide/shader-compiler/extract-libshacccg.suprx).
-- Obtain your copy of *Battlefield: Bad Company 2* legally from the Amazon store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/bc2/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
-- Copy the `/sdcard/android/obb/bc2/` folder to `ux0:data/bc2`.
-- Open the apk and extract `libbc2.so` from the `lib/armeabi` folder to `ux0:data/bc2`.
-- Install [BC2.vpk](https://github.com/TheOfficialFloW/bc2_vita/releases/download/v1.0/BC2.vpk) on your *PS Vita*.
+- Obtain your copy of *Final Fantasy 3* legally from the Google Play store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/com.square_enix.android_googleplay.FFIII_GP/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
+- Copy the `/sdcard/android/obb/com.square_enix.android_googleplay.FFIII_GP/` folder to `ux0:data/ff3_vita`.
+- Open the apk and extract `libff3.so` from the `lib/armeabi-v7a` folder to `ux0:data/ff3_vita`.
+- Install [FF3.vpk](https://github.com/frangarcj/ff3_vita/releases/download/v1.0/FF3.vpk) on your *PS Vita*.
 
 ## Build Instructions (For Developers)
 
@@ -58,6 +58,17 @@ Additionally, you'll need these libraries to be compiled as well with `-mfloat-a
     make SOFTFP_ABI=1 DRAW_SPEEDHACK=1 install
     ````
 
+- [opensles](https://github.com/frangarj/opensles)
+
+  - ````bash
+    cd libopensles
+    make install
+    ````
+Finally, you'll need these libraries recompiled with `-mfloat-abi=softfp` from [vitasdk/packages](https://github.com/vitasdk/packages):
+- sndfile
+- SDL
+- icu4c
+
 After all these requirements are met, you can compile the loader with the following commands:
 
 ```bash
@@ -67,5 +78,6 @@ cmake .. && make
 
 ## Credits
 
+- TheFloW for the initial arm elf loader.
 - Rinnegatamante for vitaGL.
-- Once13One for providing LiveArea assets.
+- Darthbellic for providing LiveArea assets.
