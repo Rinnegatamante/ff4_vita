@@ -28,4 +28,6 @@ jni_intarray *drawFont(char *str, int i, int i2, int i3);
 void createEditText(char *str);
 char *getEditText();
 
+int getCurrentLanguage();
+
 #endif

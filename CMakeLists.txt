@@ -35,6 +35,7 @@ target_link_libraries(FF3.elf
   mathneon
   kubridge_stub
   SceAppMgr_stub
+  SceAppUtil_stub
   SceAudio_stub
   SceCtrl_stub
   SceCommonDialog_stub

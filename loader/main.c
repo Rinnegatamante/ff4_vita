@@ -7,6 +7,7 @@
  */
 
 #include <kubridge.h>
+#include <psp2/apputil.h>
 #include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/dirent.h>
@@ -119,14 +120,6 @@ enum MethodIDs {
   DRAW_FONT,
   CREATE_EDIT_TEXT,
   GET_EDIT_TEXT,
-  GET_CONTEXT,
-  GET_WINDOW_MANAGER,
-  GET_DEFAULT_DISPLAY,
-  GET_METRICS,
-  GET_HIGH_RESOLUTION,
-  GET_SCREEN_HEIGHT_PIXEL,
-  GET_SCREEN_HEIGHT_INCH,
-  HAS_TOUCHSCREEN,
 } MethodIDs;
 
 typedef struct {
@@ -145,15 +138,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
     {"drawFont", DRAW_FONT},
     {"createEditText", CREATE_EDIT_TEXT},
-    {"getEditText", GET_EDIT_TEXT},    
-    {"getContext", GET_CONTEXT},
-    {"getWindowManager", GET_WINDOW_MANAGER},
-    {"getDefaultDisplay", GET_DEFAULT_DISPLAY},
-    {"getMetrics", GET_METRICS},
-    {"GetHighResolution", GET_HIGH_RESOLUTION},
-    {"GetScreenHeightPixel", GET_SCREEN_HEIGHT_PIXEL},
-    {"GetScreenHeightInch", GET_SCREEN_HEIGHT_INCH},
-    {"HasTouchScreen", HAS_TOUCHSCREEN},
+    {"getEditText", GET_EDIT_TEXT},
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
@@ -240,10 +225,6 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
 int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
                              uintptr_t *args) {
   switch (methodID) {
-  case GET_HIGH_RESOLUTION:
-    return 1;
-  case HAS_TOUCHSCREEN:
-    return 0;
   default:
     return 0;
   }
@@ -261,10 +242,8 @@ uint64_t CallStaticLongMethodV(void *env, void *obj, int methodID,
 
 int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   switch (methodID) {
-  case GET_SCREEN_HEIGHT_PIXEL:
-    return SCREEN_H;
   case GET_LANGUAGE:
-    return 5;
+    return getCurrentLanguage();
   default:
     return 0;
   }
@@ -273,8 +252,6 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 float CallStaticFloatMethodV(void *env, void *obj, int methodID,
                              uintptr_t *args) {
   switch (methodID) {
-  case GET_SCREEN_HEIGHT_INCH:
-    return 3.0f;
   default:
     return 0.0f;
   }
@@ -572,10 +549,15 @@ void setup_viewport(int width, int height) {
   int x = (width - this_width) / 2;
   int y = (height - this_height) / 2;
   glViewport(x, y, this_width, this_height);
-
 }
 
 int main_thread(SceSize args, void *argp) {
+  SceAppUtilInitParam init_param;
+  SceAppUtilBootParam boot_param;
+  memset(&init_param, 0, sizeof(SceAppUtilInitParam));
+  memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
+  sceAppUtilInit(&init_param, &boot_param);
+
   vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE,
                                 SHARK_ENABLE);
   vglUseVram(GL_TRUE);

@@ -1,7 +1,9 @@
 #include "bridge.h"
 #include <limits.h>
 #include <math.h>
+#include <psp2/apputil.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/system_param.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,7 +189,7 @@ void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
 
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 
-  int i = 5;
+  int i = getCurrentLanguage();
   if (i >= 6) {
     return bArr;
   }
@@ -252,7 +254,7 @@ jni_bytearray *loadFile(char *str) {
   substring = substring == NULL ? str : substring;
   char temp_path[512];
   int file_length;
-  sprintf(temp_path, "%s.lproj/%s", lang[5], str);
+  sprintf(temp_path, "%s.lproj/%s", lang[getCurrentLanguage()], str);
   unsigned char *a = m476a(temp_path, &file_length);
   if (a == NULL) {
     sprintf(temp_path, "files/%s", str);
@@ -467,9 +469,7 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
 
 int editText = -1;
 
-void createEditText(char *str) { 
-  editText = init_ime_dialog("", str); 
-}
+void createEditText(char *str) { editText = init_ime_dialog("", str); }
 
 char *getEditText() {
   char *result = NULL;
@@ -479,4 +479,23 @@ char *getEditText() {
   }
   editText = -1;
   return result;
+}
+
+int getCurrentLanguage() {
+  int lang = -1;
+  sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &lang);
+  switch (lang) {
+  case SCE_SYSTEM_PARAM_LANG_JAPANESE:
+    return 0;
+  case SCE_SYSTEM_PARAM_LANG_FRENCH:
+    return 2;
+  case SCE_SYSTEM_PARAM_LANG_GERMAN:
+    return 3;
+  case SCE_SYSTEM_PARAM_LANG_ITALIAN:
+    return 4;
+  case SCE_SYSTEM_PARAM_LANG_SPANISH:
+    return 5;
+  default:
+    return 1;
+  }
 }
