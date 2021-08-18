@@ -488,7 +488,7 @@ int getCurrentLanguage() {
   case SCE_SYSTEM_PARAM_LANG_ITALIAN:
     return 4;
   case SCE_SYSTEM_PARAM_LANG_SPANISH:
-    return 4;
+    return 5;
   default:
     return 1;
   }
