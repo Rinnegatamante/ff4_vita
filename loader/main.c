@@ -368,12 +368,13 @@ void InitJNIEnv(void) {
 
 void *Android_JNI_GetEnv(void) { return fake_env; }
 
-int pthread_mutex_init_fake(pthread_mutex_t **uid, const int *mutexattr) {
+int pthread_mutex_init_fake(pthread_mutex_t **uid,
+                            const pthread_mutexattr_t *mutexattr) {
   pthread_mutex_t *m = calloc(1, sizeof(pthread_mutex_t));
   if (!m)
     return -1;
 
-  const int recursive = (mutexattr && *mutexattr == 1);
+  const int recursive = (mutexattr && *(const int *)mutexattr == 1);
   *m = recursive ? PTHREAD_RECURSIVE_MUTEX_INITIALIZER
                  : PTHREAD_MUTEX_INITIALIZER;
 
@@ -950,7 +951,7 @@ int main(int argc, char *argv[]) {
 
   SceUID thid =
       sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,
-                            0x40, 128 * 1024, 0, 0, NULL);
+                            0x40, 1024 * 1024, 0, 0, NULL);
   sceKernelStartThread(thid, 0, NULL);
   return sceKernelExitDeleteThread(0);
 }
