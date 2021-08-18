@@ -58,7 +58,7 @@ Additionally, you'll need these libraries to be compiled as well with `-mfloat-a
     make SOFTFP_ABI=1 DRAW_SPEEDHACK=1 install
     ````
 
-- [opensles](https://github.com/frangarj/opensles)
+- [opensles](https://github.com/frangarcj/opensles)
 
   - ````bash
     cd libopensles
