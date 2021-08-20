@@ -20,8 +20,8 @@
 #include "dialog.h"
 
 #define SAVE_FILENAME "ux0:/data/ff4"
-#define OBB_FILE                                                               \
-  "ux0:/data/ff4/main.obb"
+#define OBB_FILE "ux0:/data/ff4/main.obb"
+#define SAVE_FILE "ux0:data/ff4/save.bin"
 
 unsigned char *header = NULL;
 int header_length = 0;
@@ -294,9 +294,52 @@ jni_bytearray *loadRawFile(char *str) {
   return result;
 }
 
+jni_bytearray *loadSound(char *str) {
+  char str2[128], path[256];
+  int file_length;
+  if (strlen(str) == 0 || !strstr(str, "voice/")) {
+    sprintf(str2, "%s.akb", str);
+  } else {
+    sprintf(str2, "%s", &str[6]);
+  }
+  
+  sprintf(path, "files/SOUND/BGM/%s", str2);
+  unsigned char *a = m476a(path, &file_length);
+  if (a == NULL) {
+	sprintf(path, "files/SOUND/SE/%s", str2);
+    unsigned char *a = m476a(path, &file_length);
+	if (a == NULL) {
+	  sprintf(path, "files/SOUND/VOICE/%s", str2);
+      unsigned char *a = m476a(path, &file_length);
+    }
+  }
+
+  if (a == NULL) {
+    return NULL;
+  }
+
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
+  result->elements = a;
+  result->size = file_length;
+
+  return result;
+}
+
 jni_bytearray *getSaveFileName() {
 
   char *buffer = SAVE_FILENAME;
+  jni_bytearray *result = malloc(sizeof(jni_bytearray));
+  result->elements = malloc(strlen(buffer) + 1);
+  // Sets the value
+  strcpy((char *)result->elements, buffer);
+  result->size = strlen(buffer) + 1;
+
+  return result;
+}
+
+jni_bytearray *getSaveDataPath() {
+
+  char *buffer = SAVE_FILE;
   jni_bytearray *result = malloc(sizeof(jni_bytearray));
   result->elements = malloc(strlen(buffer) + 1);
   // Sets the value

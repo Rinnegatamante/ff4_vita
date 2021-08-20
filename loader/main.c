@@ -147,7 +147,11 @@ enum MethodIDs {
   GET_VIEW_W,
   GET_VIEW_H,
   UPDATE_VIEWPORT_SIZE,
-  SET_FPS
+  SET_FPS,
+  IS_OK_ACHIEVEMENT,
+  GET_KEY_EVENT,
+  LOAD_SOUND,
+  GET_SAVE_DATA_PATH
 } MethodIDs;
 
 typedef struct {
@@ -175,6 +179,11 @@ static NameToMethodID name_to_method_ids[] = {
 	{"getViewHeight", GET_VIEW_H},
 	{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
 	{"setFPS", SET_FPS},
+	{"isOKAchievement", IS_OK_ACHIEVEMENT},
+	{"getKeyEvent", GET_KEY_EVENT},
+	{"loadSound", LOAD_SOUND},
+	{"getSaveDataPath", GET_SAVE_DATA_PATH},
+	{"getStoragePath", GET_SAVEFILENAME}, // We use same path
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
@@ -196,7 +205,7 @@ int GetStaticMethodID(void *env, void *class, const char *name,
     if (strcmp(name, name_to_method_ids[i].name) == 0)
       return name_to_method_ids[i].id;
   }
-  printf("GetMethodID %s\n", name);
+  printf("GetStaticMethodID %s\n", name);
 
   return UNKNOWN;
 }
@@ -205,6 +214,8 @@ int CallBooleanMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   switch (methodID) {
   case IS_DEVICE_ANDROID_TV:
     return isDeviceAndroidTV();
+  case IS_OK_ACHIEVEMENT:
+    return 1;
   default:
     return 0;
   }
@@ -231,6 +242,8 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case LOAD_FILE:
     return loadFile((char *)args[0]);
+  case LOAD_SOUND:
+    return loadSound((char *)args[0]);
   case LOAD_RAW_FILE:
     return loadRawFile((char *)args[0]);
   case GET_SAVEFILENAME:
@@ -241,6 +254,8 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
     return drawFont((char *)args[0], args[1], args[2], args[3]);
   case GET_EDIT_TEXT:
     return getEditText();
+  case GET_SAVE_DATA_PATH:
+    return getSaveDataPath();
   default:
     return NULL;
   }
@@ -954,7 +969,7 @@ int file_exists(const char *path) {
   return sceIoGetstat(path, &stat) >= 0;
 }
 
-/*int crasher(unsigned int argc, void *argv) {
+int crasher(unsigned int argc, void *argv) {
 	uint32_t *nullptr = NULL;
 	for (;;) {
 		SceCtrlData pad;
@@ -962,7 +977,7 @@ int file_exists(const char *path) {
 		if (pad.buttons & SCE_CTRL_SELECT) *nullptr = 0;
 		sceKernelDelayThread(100);
 	}
-}*/
+}
 
 int main(int argc, char *argv[]) {
   sceSysmoduleLoadModule(9);
@@ -970,8 +985,8 @@ int main(int argc, char *argv[]) {
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);
 				
-  //SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
-  //sceKernelStartThread(crasher_thread, 0, NULL);
+  SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
+  sceKernelStartThread(crasher_thread, 0, NULL);
 
   scePowerSetArmClockFrequency(444);
   scePowerSetBusClockFrequency(222);

@@ -10,8 +10,10 @@ typedef struct {
 } jni_bytearray;
 
 jni_bytearray *loadFile(char *str);
+jni_bytearray *loadSound(char *str);
 jni_bytearray *loadRawFile(char *str);
 jni_bytearray *getSaveFileName();
+jni_bytearray *getSaveDataPath();
 void createSaveFile(size_t size);
 uint64_t getCurrentFrame(uint64_t j);
 int readHeader();
