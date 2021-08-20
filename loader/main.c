@@ -47,7 +47,7 @@ int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 
 int _opensles_user_freq = 32000;
 
-static so_module ff3_mod;
+static so_module ff4_mod;
 
 void *__wrap_memcpy(void *dest, const void *src, size_t n) {
   return sceClibMemcpy(dest, src, n);
@@ -64,7 +64,7 @@ int ret0(void) { return 0; }
 int ret1(void) { return 1; }
 
 int __android_log_print(int prio, const char *tag, const char *fmt, ...) {
-#ifdef DEBUG
+//#ifdef DEBUG
   va_list list;
   char string[512];
 
@@ -73,7 +73,7 @@ int __android_log_print(int prio, const char *tag, const char *fmt, ...) {
   va_end(list);
 
   printf("%s\n", string);
-#endif
+//#endif
   return 0;
 }
 
@@ -107,6 +107,26 @@ static const short _C_toupper_[] = {
 
 const short *_toupper_tab_ = _C_toupper_;
 
+int this_width;
+int this_height;
+
+void updateViewportSize(int32_t width, int32_t height, uint8_t portrait) {
+  int i3 = width * 3;
+  if (i3 >= height * 4) {
+    this_height = height;
+    this_width = width;
+    if (this_width > (this_height * 21) / 9) {
+      this_width = (this_height * 21) / 9;
+    }
+  } else {
+    this_width = width;
+    this_height = i3 / 4;
+  }
+  int x = (width - this_width) / 2;
+  int y = (height - this_height) / 2;
+  glViewport(x, y, this_width, this_height);
+}
+
 enum MethodIDs {
   UNKNOWN = 0,
   GET_CURRENT_FRAME, /**/
@@ -120,6 +140,14 @@ enum MethodIDs {
   DRAW_FONT,
   CREATE_EDIT_TEXT,
   GET_EDIT_TEXT,
+  GET_RES_WIDTH,
+  GET_RES_HEIGHT,
+  GET_VIEW_X,
+  GET_VIEW_Y,
+  GET_VIEW_W,
+  GET_VIEW_H,
+  UPDATE_VIEWPORT_SIZE,
+  SET_FPS
 } MethodIDs;
 
 typedef struct {
@@ -139,6 +167,14 @@ static NameToMethodID name_to_method_ids[] = {
     {"drawFont", DRAW_FONT},
     {"createEditText", CREATE_EDIT_TEXT},
     {"getEditText", GET_EDIT_TEXT},
+	{"getResWidth", GET_RES_WIDTH},
+	{"getResHeight", GET_RES_HEIGHT},
+	{"getViewPosX", GET_VIEW_X},
+	{"getViewPosY", GET_VIEW_Y},
+	{"getViewWidth", GET_VIEW_W},
+	{"getViewHeight", GET_VIEW_H},
+	{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
+	{"setFPS", SET_FPS},
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
@@ -210,13 +246,22 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
   }
 }
 
+extern void setFPS(int32_t i);
 void CallStaticVoidMethodV(void *env, void *obj, int methodID,
                            uintptr_t *args) {
   switch (methodID) {
   case CREATE_SAVEFILE:
     createSaveFile((size_t)args[0]);
+	break;
   case CREATE_EDIT_TEXT:
     createEditText((char *)args[0]);
+	break;
+  case UPDATE_VIEWPORT_SIZE:
+    updateViewportSize((int32_t)args[0], (int32_t)args[1], (uint8_t)args[2]);
+    break;
+  case SET_FPS:
+    setFPS((int32_t)args[0]);
+	break;
   default:
     return;
   }
@@ -244,6 +289,15 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   switch (methodID) {
   case GET_LANGUAGE:
     return getCurrentLanguage();
+  case GET_VIEW_X:
+  case GET_VIEW_Y:
+    return 0;
+  case GET_VIEW_W:
+  case GET_RES_WIDTH:
+    return SCREEN_W;
+  case GET_VIEW_H:
+  case GET_RES_HEIGHT:
+    return SCREEN_H;
   default:
     return 0;
   }
@@ -525,33 +579,6 @@ char *getcwd(char *buf, size_t size) {
   return NULL;
 }
 
-static int audio_port = 0;
-
-void SetShortArrayRegion(void *env, int array, size_t start, size_t len,
-                         const uint8_t *buf) {
-  sceAudioOutOutput(audio_port, buf);
-}
-
-int this_width;
-int this_height;
-
-void setup_viewport(int width, int height) {
-  int i3 = width * 3;
-  if (i3 >= height * 4) {
-    this_height = height;
-    this_width = width;
-    if (this_width > (this_height * 21) / 9) {
-      this_width = (this_height * 21) / 9;
-    }
-  } else {
-    this_width = width;
-    this_height = i3 / 4;
-  }
-  int x = (width - this_width) / 2;
-  int y = (height - this_height) / 2;
-  glViewport(x, y, this_width, this_height);
-}
-
 int main_thread(SceSize args, void *argp) {
   SceAppUtilInitParam init_param;
   SceAppUtilBootParam boot_param;
@@ -559,20 +586,16 @@ int main_thread(SceSize args, void *argp) {
   memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
   sceAppUtilInit(&init_param, &boot_param);
 
-  vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE,
-                                SHARK_ENABLE);
-  vglUseVram(GL_TRUE);
   vglInitExtended(0, SCREEN_W, SCREEN_H,
                   MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
                   SCE_GXM_MULTISAMPLE_4X);
 
-  int (*ff3_render)(char *, int, int, int, int) =
-      (void *)so_symbol(&ff3_mod, "render");
-  int (*ff3_touch)(int, int, int, int, float, float, float, float,
-                   unsigned int) = (void *)so_symbol(&ff3_mod, "touch");
+  int (*ff4_render)(char *, int, int, int, int, int, int) =
+      (void *)so_symbol(&ff4_mod, "render");
+  int (*ff4_touch)(int, int, int, int, float, float, float, float,
+                   unsigned int) = (void *)so_symbol(&ff4_mod, "touch");
 
   readHeader();
-  setup_viewport(SCREEN_W, SCREEN_H);
   while (1) {
 
     SceTouchData touch;
@@ -618,10 +641,10 @@ int main_thread(SceSize args, void *argp) {
     if (pad.buttons & SCE_CTRL_RIGHT)
       mask |= 0x10;
 
-    ff3_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
+    ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
               coordinates[2], coordinates[3], mask);
 
-    ff3_render(fake_env, 0, this_width, this_height, 0);
+    ff4_render(fake_env, 0, SCREEN_W, 0, 0, 0, 0);
     vglSwapBuffers(GL_FALSE);
   }
 
@@ -629,9 +652,9 @@ int main_thread(SceSize args, void *argp) {
 }
 
 void patch_game(void) {
-#ifdef DEBUG
-  hook_thumb(ff3_mod.text_base + 0xe58b6, (uintptr_t)&printf);
-#endif
+//#ifdef DEBUG
+  hook_thumb(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
+//#endif
 }
 
 extern void *_ZdaPv;
@@ -820,6 +843,7 @@ static DynLibFunction dynlib_functions[] = {
     {"ftell", (uintptr_t)&ftell},
     {"fwrite", (uintptr_t)&fwrite},
     {"gettimeofday", (uintptr_t)&gettimeofday},
+	{"gmtime", (uintptr_t)&gmtime},
     {"glAlphaFunc", (uintptr_t)&glAlphaFunc},
     {"glBindTexture", (uintptr_t)&glBindTexture},
     {"glBlendFunc", (uintptr_t)&glBlendFunc},
@@ -836,22 +860,28 @@ static DynLibFunction dynlib_functions[] = {
     {"glDrawArrays", (uintptr_t)&glDrawArrays},
     {"glEnable", (uintptr_t)&glEnable},
     {"glEnableClientState", (uintptr_t)&glEnableClientState},
+	{"glFogf", (uintptr_t)&glFogf},
+	{"glFogfv", (uintptr_t)&glFogfv},
     {"glGenTextures", (uintptr_t)&glGenTextures},
     {"glGetError", (uintptr_t)&glGetError},
     {"glLightfv", (uintptr_t)&glLightfv},
     {"glLoadIdentity", (uintptr_t)&glLoadIdentity},
     {"glLoadMatrixf", (uintptr_t)&glLoadMatrixf},
+	{"glMaterialfv", (uintptr_t)&glMaterialfv},
     {"glMatrixMode", (uintptr_t)&glMatrixMode},
     {"glMultMatrixf", (uintptr_t)&glMultMatrixf},
+	{"glNormalPointer", (uintptr_t)&glNormalPointer},
     {"glOrthof", (uintptr_t)&glOrthof},
     {"glPopMatrix", (uintptr_t)&glPopMatrix},
     {"glPushMatrix", (uintptr_t)&glPushMatrix},
+	{"glScissor", (uintptr_t)&glScissor},
     {"glTranslatef", (uintptr_t)&glTranslatef},
     {"glTexCoordPointer", (uintptr_t)&glTexCoordPointer},
     {"glTexImage2D", (uintptr_t)&glTexImage2D},
     {"glTexParameteri", (uintptr_t)&glTexParameteri},
     {"glTexSubImage2D", (uintptr_t)&glTexSubImage2D},
     {"glVertexPointer", (uintptr_t)&glVertexPointer},
+	{"glViewport", (uintptr_t)&glViewport},
     {"localtime", (uintptr_t)&localtime_hook},
     {"lrand48", (uintptr_t)&lrand48},
     {"malloc", (uintptr_t)&malloc},
@@ -862,6 +892,7 @@ static DynLibFunction dynlib_functions[] = {
     {"memset", (uintptr_t)&memset},
     {"mmap", (uintptr_t)&mmap},
     {"munmap", (uintptr_t)&munmap},
+	{"printf", (uintptr_t)&printf},
     {"pthread_cond_broadcast", (uintptr_t)&pthread_cond_broadcast_fake},
     {"pthread_cond_destroy", (uintptr_t)&pthread_cond_destroy_fake},
     {"pthread_cond_init", (uintptr_t)&pthread_cond_init_fake},
@@ -879,6 +910,7 @@ static DynLibFunction dynlib_functions[] = {
     {"pthread_mutexattr_settype", (uintptr_t)&pthread_mutexattr_settype},
     {"pthread_setspecific", (uintptr_t)&pthread_setspecific},
     {"pthread_getspecific", (uintptr_t)&pthread_getspecific},
+	{"puts", (uintptr_t)&puts},
     {"qsort", (uintptr_t)&qsort},
     {"raise", (uintptr_t)&raise},
     {"realloc", (uintptr_t)&realloc},
@@ -896,15 +928,19 @@ static DynLibFunction dynlib_functions[] = {
     {"strcpy", (uintptr_t)&strcpy},
     {"strlen", (uintptr_t)&strlen},
     {"strncasecmp", (uintptr_t)&strncasecmp},
+	{"strncat", (uintptr_t)&strncat},
     {"strncmp", (uintptr_t)&strncmp},
     {"strncpy", (uintptr_t)&strncpy},
     {"strrchr", (uintptr_t)&strrchr},
+	{"strstr", (uintptr_t)&strstr},
     {"strtok", (uintptr_t)&strtok},
     {"strtod", (uintptr_t)&strtod},
     {"strtol", (uintptr_t)&strtol},
+	{"tan", (uintptr_t)&tan},
     {"tanf", (uintptr_t)&tanf},
     {"time", (uintptr_t)&time},
     {"usleep", (uintptr_t)&usleep},
+	{"vsprintf", (uintptr_t)&vsprintf},
     {"vsnprintf", (uintptr_t)&vsnprintf},
 };
 
@@ -918,10 +954,24 @@ int file_exists(const char *path) {
   return sceIoGetstat(path, &stat) >= 0;
 }
 
+/*int crasher(unsigned int argc, void *argv) {
+	uint32_t *nullptr = NULL;
+	for (;;) {
+		SceCtrlData pad;
+		sceCtrlPeekBufferPositive(0, &pad, 1);
+		if (pad.buttons & SCE_CTRL_SELECT) *nullptr = 0;
+		sceKernelDelayThread(100);
+	}
+}*/
+
 int main(int argc, char *argv[]) {
+  sceSysmoduleLoadModule(9);
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);
+				
+  //SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
+  //sceKernelStartThread(crasher_thread, 0, NULL);
 
   scePowerSetArmClockFrequency(444);
   scePowerSetBusClockFrequency(222);
@@ -937,17 +987,17 @@ int main(int argc, char *argv[]) {
 
   InitJNIEnv();
 
-  if (so_load(&ff3_mod, SO_PATH) < 0)
+  if (so_load(&ff4_mod, SO_PATH) < 0)
     fatal_error("Error could not load %s.", SO_PATH);
 
-  so_relocate(&ff3_mod);
-  so_resolve(&ff3_mod, dynlib_functions,
+  so_relocate(&ff4_mod);
+  so_resolve(&ff4_mod, dynlib_functions,
              sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
 
   patch_game();
-  so_flush_caches(&ff3_mod);
+  so_flush_caches(&ff4_mod);
 
-  so_initialize(&ff3_mod);
+  so_initialize(&ff4_mod);
 
   SceUID thid =
       sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,

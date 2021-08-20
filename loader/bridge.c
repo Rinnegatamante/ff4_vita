@@ -19,9 +19,9 @@
 
 #include "dialog.h"
 
-#define SAVE_FILENAME "ux0:/data/ff3"
+#define SAVE_FILENAME "ux0:/data/ff4"
 #define OBB_FILE                                                               \
-  "ux0:/data/ff3/main.20004.com.square_enix.android_googleplay.FFIII_GP.obb"
+  "ux0:/data/ff4/main.obb"
 
 unsigned char *header = NULL;
 int header_length = 0;
@@ -133,7 +133,7 @@ int readHeader() {
        i += fread(&bArr[i], sizeof(unsigned char), 16 - i, fp)) {
   }
 
-  decodeArray(bArr, 16, 84861466u);
+  decodeArray(bArr, 16, 419430400u);
 
   if (getInt(bArr, 0) != 826495553) {
     printf("initFileTable: Header Error\n");
@@ -152,7 +152,7 @@ int readHeader() {
          i += fread(&header[i], sizeof(unsigned char), header_length - i, fp)) {
     }
 
-    decodeArray(header, header_length, a2 + 84861466u);
+    decodeArray(header, header_length, a2 + 419430400u);
 
     unsigned char *header2 = gzipRead(header, &header_length);
 
@@ -173,7 +173,7 @@ void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
   int32_t len;
 
   uint16_t *temp = malloc(length * 3);
-  u_setDataDirectory("app0:/");
+  u_setDataDirectory("ux0:/data/ff4/");
   printf("%s\n", u_getDataDirectory());
   conv = ucnv_open(src_encoding, &status);
 
@@ -239,6 +239,7 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 }
 
 jni_bytearray *loadFile(char *str) {
+  printf("loadFile(%s)\n", str);
   char *lang[] = {"ja", "en",    "fr",    "de", "it",
                   "es", "zh_CN", "zh_TW", "ko", "th"};
 
@@ -314,11 +315,16 @@ void createSaveFile(size_t size) {
 }
 
 uint64_t j3 = 0;
+int32_t framerate;
+
+void setFPS(int32_t i) {
+  framerate = i;
+}
 
 uint64_t getCurrentFrame(uint64_t j) {
 
   while (1) {
-    uint64_t j2 = sceKernelGetProcessTimeWide() * 3 / 100000;
+    uint64_t j2 = sceKernelGetProcessTimeWide() * framerate / 1000000;
     if (j2 != j3) {
       j3 = j2;
       return j2;
@@ -332,7 +338,7 @@ uint64_t getCurrentFrame(uint64_t j) {
    (((r)&0xFF) << 0))
 
 jni_intarray *loadTexture(jni_bytearray *bArr) {
-
+  printf("loadTexture(%X)\n", bArr);
   jni_intarray *texture = malloc(sizeof(jni_intarray));
 
   int x, y, channels_in_file;
@@ -369,7 +375,7 @@ void initFont() {
   if (info != NULL)
     return;
 
-  FILE *fontFile = fopen("app0:/Roboto-Bold.ttf", "rb");
+  FILE *fontFile = fopen("ux0:/data/ff4/Roboto-Bold.ttf", "rb");
   fseek(fontFile, 0, SEEK_END);
   size = ftell(fontFile);       /* how long is the file ? */
   fseek(fontFile, 0, SEEK_SET); /* reset */
