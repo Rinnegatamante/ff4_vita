@@ -306,16 +306,15 @@ jni_bytearray *loadSound(char *str) {
   sprintf(path, "files/SOUND/BGM/%s", str2);
   unsigned char *a = m476a(path, &file_length);
   if (a == NULL) {
-	sprintf(path, "files/SOUND/SE/%s", str2);
+    sprintf(path, "files/SOUND/SE/%s", str2);
     unsigned char *a = m476a(path, &file_length);
-	if (a == NULL) {
-	  sprintf(path, "files/SOUND/VOICE/%s", str2);
+    if (a == NULL) {
+      sprintf(path, "files/SOUND/VOICE/%s", str2);
       unsigned char *a = m476a(path, &file_length);
+      if (a == NULL) {
+        return NULL;
+      }
     }
-  }
-
-  if (a == NULL) {
-    return NULL;
   }
 
   jni_bytearray *result = malloc(sizeof(jni_bytearray));
