@@ -111,7 +111,7 @@ unsigned char *m476a(char *str, int *file_length) {
 
   fclose(fp);
 
-  decodeArray(bArr2, *file_length, a3 + 84861466u);
+  decodeArray(bArr2, *file_length, a3 + 419430400u);
 
   unsigned char *a4 = gzipRead(bArr2, file_length);
 
@@ -315,7 +315,7 @@ void createSaveFile(size_t size) {
 }
 
 uint64_t j3 = 0;
-int32_t framerate;
+int32_t framerate = 30;
 
 void setFPS(int32_t i) {
   framerate = i;
