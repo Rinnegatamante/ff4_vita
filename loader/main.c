@@ -712,7 +712,7 @@ void *AAsset_getLength() {
   return NULL;
 }
 
-static DynLibFunction dynlib_functions[] = {
+static so_default_dynlib default_dynlib[] = {
     {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
     {"AAsset_close", (uintptr_t)&AAsset_close},
     {"AAssetManager_fromJava", (uintptr_t)&AAssetManager_fromJava},
@@ -939,13 +939,11 @@ int main(int argc, char *argv[]) {
 
   InitJNIEnv();
 
-  if (so_load(&ff3_mod, SO_PATH) < 0)
+  if (so_load(&ff3_mod, SO_PATH, LOAD_ADDRESS) < 0)
     fatal_error("Error could not load %s.", SO_PATH);
 
   so_relocate(&ff3_mod);
-  so_resolve(&ff3_mod, dynlib_functions,
-             sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
-
+  so_resolve(&ff3_mod, default_dynlib, sizeof(default_dynlib), 0);
   patch_game();
   so_flush_caches(&ff3_mod);
 
