@@ -215,8 +215,10 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case CREATE_SAVEFILE:
     createSaveFile((size_t)args[0]);
+    break;
   case CREATE_EDIT_TEXT:
     createEditText((char *)args[0]);
+    break;
   default:
     return;
   }
