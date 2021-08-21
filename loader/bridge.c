@@ -209,7 +209,7 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 }
 
 jni_bytearray *loadFile(char *str) {
-  printf("loadFile(%s)\n", str);
+  //printf("loadFile(%s)\n", str);
   char *lang[] = {"ja", "en",    "fr",    "de", "it",
                   "es", "zh_CN", "zh_TW", "ko", "th"};
 
@@ -373,7 +373,7 @@ uint64_t getCurrentFrame(uint64_t j) {
    (((r)&0xFF) << 0))
 
 jni_intarray *loadTexture(jni_bytearray *bArr) {
-  printf("loadTexture(%X)\n", bArr);
+  //printf("loadTexture(%X)\n", bArr);
   jni_intarray *texture = malloc(sizeof(jni_intarray));
 
   int x, y, channels_in_file;

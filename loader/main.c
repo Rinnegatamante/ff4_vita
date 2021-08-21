@@ -1,6 +1,6 @@
-/* main.c -- Battlefield: Bad Company 2 .so loader
+/* main.c -- Final Fantasy 4 .so loader
  *
- * Copyright (C) 2021 Andy Nguyen
+ * Copyright (C) 2021 Rinnegatamante, frangarcj, Andy Nguyen
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
@@ -710,15 +710,6 @@ extern void *__stack_chk_fail;
 static int __stack_chk_guard_fake = 0x42424242;
 static FILE __sF_fake[0x100][3];
 
-struct tm *localtime_hook(time_t *timer) {
-  struct tm *res = localtime(timer);
-  if (res)
-    return res;
-  // Fix an uninitialized variable bug.
-  time(timer);
-  return localtime(timer);
-}
-
 void *mmap(void *addr, size_t length, int prot, int flags, int fd,
            off_t offset) {
   return malloc(length);
@@ -908,7 +899,7 @@ static DynLibFunction dynlib_functions[] = {
     {"glTexSubImage2D", (uintptr_t)&glTexSubImage2D},
     {"glVertexPointer", (uintptr_t)&glVertexPointer},
     {"glViewport", (uintptr_t)&glViewport},
-    {"localtime", (uintptr_t)&localtime_hook},
+    {"localtime", (uintptr_t)&localtime},
     {"lrand48", (uintptr_t)&lrand48},
     {"malloc", (uintptr_t)&malloc},
     {"memchr", (uintptr_t)&memchr},
