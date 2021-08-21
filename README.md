@@ -1,8 +1,8 @@
-# Final Fantasy 3 Vita
+# Final Fantasy 4 Vita
 
 <p align="center"><img src="./screenshots/game.png"></p>
 
-This is a wrapper/port of *Final Fantasy 3 Android* for the *PS Vita*.
+This is a wrapper/port of *Final Fantasy 4 Android* for the *PS Vita*.
 
 The port works by loading the official Android ARMv7 executable in memory, resolving its imports with native functions and patching it in order to properly run.
 
@@ -22,10 +22,10 @@ In order to properly install the game, you'll have to follow these steps precise
 
 - **Optional**: Install [PSVshell](https://github.com/Electry/PSVshell/releases) to overclock your device to 500Mhz.
 - Install `libshacccg.suprx`, if you don't have it already, by following [this guide](https://samilops2.gitbook.io/vita-troubleshooting-guide/shader-compiler/extract-libshacccg.suprx).
-- Obtain your copy of *Final Fantasy 3* legally from the Google Play store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/com.square_enix.android_googleplay.FFIII_GP/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
-- Copy the `/sdcard/android/obb/com.square_enix.android_googleplay.FFIII_GP/` folder to `ux0:data/ff3_vita`.
-- Open the apk and extract `libff3.so` from the `lib/armeabi-v7a` folder to `ux0:data/ff3_vita`.
-- Install [FF3.vpk](https://github.com/frangarcj/ff3_vita/releases/download/v1.0/FF3.vpk) on your *PS Vita*.
+- Obtain your copy of *Final Fantasy 4* legally from the Google Play store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/com.square_enix.android_googleplay.FFIV_GP/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
+- Copy the `.obb` file to `ux0:data/ff4` and rename it to `main.obb`.
+- Open the apk and extract `libff4.so` from the `lib/armeabi-v7a` folder to `ux0:data/ff4`.
+- Install [FF4.vpk](https://github.com/Rinnegatamante/ff4_vita/releases) on your *PS Vita*.
 
 ## Build Instructions (For Developers)
 
@@ -55,7 +55,7 @@ Additionally, you'll need these libraries to be compiled as well with `-mfloat-a
 - [vitaGL](https://github.com/Rinnegatamante/vitaGL)
 
   - ````bash
-    make SOFTFP_ABI=1 DRAW_SPEEDHACK=1 install
+    make SOFTFP_ABI=1 install
     ````
 
 - [opensles](https://github.com/frangarcj/opensles)
@@ -67,7 +67,6 @@ Additionally, you'll need these libraries to be compiled as well with `-mfloat-a
 Finally, you'll need these libraries recompiled with `-mfloat-abi=softfp` from [vitasdk/packages](https://github.com/vitasdk/packages):
 - sndfile
 - SDL
-- icu4c
 
 After all these requirements are met, you can compile the loader with the following commands:
 
@@ -78,6 +77,5 @@ cmake .. && make
 
 ## Credits
 
-- TheFloW for the initial arm elf loader.
-- Rinnegatamante for vitaGL.
-- Darthbellic for providing LiveArea assets.
+- TheFloW for the .so loader which is the core mechanism used for this port.
+- frangarcj for FF3_Vita on which this port is heavily based off.

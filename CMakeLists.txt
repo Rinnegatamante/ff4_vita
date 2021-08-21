@@ -8,17 +8,17 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(FF3.elf C CXX)
+project(FF4.elf C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(VITA_APP_NAME "Final Fantasy 3")
-set(VITA_TITLEID  "FF3000000")
+set(VITA_TITLEID  "FF4000000")
 set(VITA_VERSION  "01.00")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -mfloat-abi=softfp")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
 
-add_executable(FF3.elf
+add_executable(FF4.elf
   loader/main.c
   loader/dialog.c
   loader/so_util.c
@@ -27,7 +27,7 @@ add_executable(FF3.elf
   loader/stb_truetype.c
 )
 
-target_link_libraries(FF3.elf
+target_link_libraries(FF4.elf
   m
   stdc++
   vitaGL
@@ -51,29 +51,21 @@ target_link_libraries(FF3.elf
   sndfile
   SDL
   SceHid_stub
-  icudata
-  icuuc
   z
   -Wl,--whole-archive
   pthread
   -Wl,--no-whole-archive
 )
 
-vita_create_self(eboot.bin FF3.elf UNSAFE)
-vita_create_vpk(FF3.vpk ${VITA_TITLEID} eboot.bin
+vita_create_self(eboot.bin FF4.elf UNSAFE)
+vita_create_vpk(FF4.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE ${CMAKE_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-       ${CMAKE_SOURCE_DIR}/Roboto-Bold.ttf Roboto-Bold.ttf
-       ${CMAKE_SOURCE_DIR}/icudt59l/cnvalias.icu icudt59l/cnvalias.icu
-       ${CMAKE_SOURCE_DIR}/icudt59l/confusables.cfu icudt59l/confusables.cfu
-       ${CMAKE_SOURCE_DIR}/icudt59l/unames.icu icudt59l/unames.icu
-       ${CMAKE_SOURCE_DIR}/icudt59l/ibm-943_P15A-2003.cnv icudt59l/ibm-943_P15A-2003.cnv
-       ${CMAKE_SOURCE_DIR}/icudt59l/ibm-5348_P100-1997.cnv icudt59l/ibm-5348_P100-1997.cnv
-
+       ${CMAKE_SOURCE_DIR}/Roboto-Regular.ttf Roboto-Regular.ttf
 )
 
 add_custom_target(copy

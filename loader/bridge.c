@@ -204,28 +204,6 @@ int readHeader() {
   return 1;
 }
 
-void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
-            size_t *dst_length_p) {
-
-  UErrorCode status = U_ZERO_ERROR;
-  UConverter *conv;
-  int32_t len;
-
-  uint16_t *temp = malloc(length * 3);
-  u_setDataDirectory("ux0:/data/ff4/");
-  printf("%s\n", u_getDataDirectory());
-  conv = ucnv_open(src_encoding, &status);
-
-  len = ucnv_toUChars(conv, temp, length * 3, src, length, &status);
-  ucnv_close(conv);
-
-  conv = ucnv_open("utf-8", &status);
-  *dst_length_p = ucnv_fromUChars(conv, dst, length * 3, temp, len, &status);
-  ucnv_close(conv);
-
-  free(temp);
-}
-
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
   return bArr;
 }
@@ -432,7 +410,10 @@ void initFont() {
   if (info != NULL)
     return;
 
-  FILE *fontFile = fopen("ux0:/data/ff4/Roboto-Regular.ttf", "rb");
+  FILE *fontFile = fopen("app0:/Roboto-Regular.ttf", "rb");
+  if (!fontFile)
+    fontFile = fopen("ux0:/data/ff4/Roboto-Regular.ttf", "rb");
+
   fseek(fontFile, 0, SEEK_END);
   size = ftell(fontFile);       /* how long is the file ? */
   fseek(fontFile, 0, SEEK_SET); /* reset */
