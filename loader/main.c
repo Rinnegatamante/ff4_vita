@@ -127,6 +127,39 @@ void updateViewportSize(int32_t width, int32_t height, uint8_t portrait) {
   glViewport(x, y, this_width, this_height);
 }
 
+int getKeyEvent() {
+  SceCtrlData pad;
+  sceCtrlPeekBufferPositiveExt2(0, &pad, 1);
+
+  int mask = 0;
+
+  if (pad.buttons & SCE_CTRL_TRIANGLE)
+    mask |= 0x400;
+  if (pad.buttons & SCE_CTRL_SQUARE)
+    mask |= 0x200;
+  if (pad.buttons & SCE_CTRL_L1)
+    mask |= 0x100;
+  if (pad.buttons & SCE_CTRL_R1)
+    mask |= 0x800;
+  if (pad.buttons & SCE_CTRL_CROSS)
+    mask |= 0x1;
+  if (pad.buttons & SCE_CTRL_CIRCLE)
+    mask |= 0x4000;
+  if (pad.buttons & SCE_CTRL_START)
+    mask |= 0x8;
+  if (pad.buttons & SCE_CTRL_SELECT)
+    mask |= 0x4;
+  if (pad.buttons & SCE_CTRL_UP)
+    mask |= 0x40;
+  if (pad.buttons & SCE_CTRL_DOWN)
+    mask |= 0x80;
+  if (pad.buttons & SCE_CTRL_LEFT)
+    mask |= 0x20;
+  if (pad.buttons & SCE_CTRL_RIGHT)
+    mask |= 0x10;
+  return mask;
+}
+
 enum MethodIDs {
   UNKNOWN = 0,
   GET_CURRENT_FRAME, /**/
@@ -186,7 +219,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"loadSound", LOAD_SOUND},
     {"getSaveDataPath", GET_SAVE_DATA_PATH},
     {"getDownloadState", GET_DOWNLOAD_STATE},
-	{"isSoundFileExist", IS_SOUND_FILE_EXIST},
+  {"isSoundFileExist", IS_SOUND_FILE_EXIST},
     {"getStoragePath", GET_SAVEFILENAME}, // We use same path
 };
 
@@ -320,6 +353,8 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
     return SCREEN_H;
   case GET_DOWNLOAD_STATE:
     return 0;
+  case GET_KEY_EVENT:
+    return getKeyEvent();
   default:
     return 0;
   }
@@ -614,8 +649,7 @@ int main_thread(SceSize args, void *argp) {
 
   int (*ff4_render)(char *, int, int, int, int, int, int) =
       (void *)so_symbol(&ff4_mod, "render");
-  int (*ff4_touch)(int, int, int, int, float, float, float, float,
-                   unsigned int) = (void *)so_symbol(&ff4_mod, "touch");
+  int (*ff4_touch)(int, int, int, int, float, float, float, float) = (void *)so_symbol(&ff4_mod, "touch");
 
   readHeader();
   while (1) {
@@ -633,38 +667,8 @@ int main_thread(SceSize args, void *argp) {
       coordinates[n * 2 + 1] = (float)touch.report[n].y / 1088.0f;
     }
 
-    SceCtrlData pad;
-    sceCtrlPeekBufferPositiveExt2(0, &pad, 1);
-
-    int mask = 0;
-
-    if (pad.buttons & SCE_CTRL_TRIANGLE)
-      mask |= 0x400;
-    if (pad.buttons & SCE_CTRL_SQUARE)
-      mask |= 0x200;
-    if (pad.buttons & SCE_CTRL_L1)
-      mask |= 0x100;
-    if (pad.buttons & SCE_CTRL_R1)
-      mask |= 0x800;
-    if (pad.buttons & SCE_CTRL_CROSS)
-      mask |= 0x1;
-    if (pad.buttons & SCE_CTRL_CIRCLE)
-      mask |= 0x4000;
-    if (pad.buttons & SCE_CTRL_START)
-      mask |= 0x8;
-    if (pad.buttons & SCE_CTRL_SELECT)
-      mask |= 0x4;
-    if (pad.buttons & SCE_CTRL_UP)
-      mask |= 0x40;
-    if (pad.buttons & SCE_CTRL_DOWN)
-      mask |= 0x80;
-    if (pad.buttons & SCE_CTRL_LEFT)
-      mask |= 0x20;
-    if (pad.buttons & SCE_CTRL_RIGHT)
-      mask |= 0x10;
-
     ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
-              coordinates[2], coordinates[3], mask);
+              coordinates[2], coordinates[3]);
 
     ff4_render(fake_env, 0, SCREEN_W, 0, 0, 0, 0);
     vglSwapBuffers(GL_FALSE);
