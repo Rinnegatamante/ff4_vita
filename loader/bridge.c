@@ -99,7 +99,7 @@ unsigned char *m476a(char *str, int *file_length) {
 
   const char *a = OBB_FILE;
   FILE *fp = fopen(a, "r");
-  int a3 = getInt(header, i + 0);
+  int a3 = getInt(header, i);
   fseek(fp, a3, SEEK_SET);
 
   *file_length = getInt(header, i + 4);
@@ -118,6 +118,45 @@ unsigned char *m476a(char *str, int *file_length) {
   free(bArr2);
 
   return a4;
+}
+
+uint8_t isFileExist(char *str) {
+  int i;
+
+  unsigned char *bArr = header;
+  if (bArr != NULL) {
+    int a = getInt(bArr, 0);
+    int i2 = 0;
+    i = 0;
+    while (a > i2) {
+      int i3 = (i2 + a) / 2;
+      int i4 = i3 * 12;
+      int a2 = getInt(header, i4 + 4);
+      int i5 = 0;
+      for (int i6 = 0; i6 < strlen(str) && i5 == 0; i6++) {
+        i5 = (header[a2 + i6] & 0xFF) - (str[i6] & 0xFF);
+      }
+      if (i5 == 0) {
+        i5 = header[a2 + strlen(str)] & 0xFF;
+      }
+      if (i5 == 0) {
+        i = i4 + 8;
+        a = i3;
+        i2 = a;
+      } else if (i5 > 0) {
+        a = i3;
+      } else {
+        i2 = i3 + 1;
+      }
+    }
+  } else {
+    i = 0;
+  }
+  if (i == 0) {
+    return 0;
+  }
+  
+  return 1;
 }
 
 int readHeader() {
@@ -188,54 +227,7 @@ void toUtf8(const char *src, size_t length, char *dst, const char *src_encoding,
 }
 
 unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
-
-  int lang = getCurrentLanguage();
-  if (lang >= 6) {
-    return bArr;
-  }
-
-  unsigned char *utf8_strings = malloc(*bArr_length * 3);
-
-  int entry_number = *(int *)&bArr[8];
-  int header_length = (entry_number * 12) + 16;
-
-  memcpy(utf8_strings, bArr, header_length);
-
-  int utf8_offset = header_length;
-  int entry_index = 0;
-  int entry_offset = 16;
-
-  while (entry_index < entry_number) {
-    *(int *)&utf8_strings[entry_offset + 8] = utf8_offset;
-
-    unsigned char string_number = bArr[entry_offset + 4];
-    int string_offset = *(int *)&bArr[entry_offset + 8];
-    for (int string_index = 0; string_index < string_number; string_index++) {
-      int string_length = 0;
-      while (bArr[string_offset + string_length] != 0) {
-        string_length++;
-      }
-      unsigned int utf8_length = 0;
-      toUtf8((const char *)&bArr[string_offset], string_length,
-             (char *)&utf8_strings[utf8_offset],
-             lang == 0 ? "shift_jis" : "windows-1252", &utf8_length);
-
-      utf8_strings[utf8_offset + utf8_length] = 0;
-
-      string_offset += string_length + 1;
-      utf8_offset += utf8_length + 1;
-    }
-    utf8_offset = utf8_offset + 1;
-    utf8_strings[utf8_offset] = 0;
-    entry_offset += 12;
-    entry_index++;
-  }
-
-  unsigned char *final_strings = malloc(utf8_offset);
-  memcpy(final_strings, utf8_strings, utf8_offset);
-  free(utf8_strings);
-  *bArr_length = utf8_offset;
-  return final_strings;
+  return bArr;
 }
 
 jni_bytearray *loadFile(char *str) {
@@ -322,6 +314,29 @@ jni_bytearray *loadSound(char *str) {
   result->size = file_length;
 
   return result;
+}
+
+uint8_t isSoundFileExist(char *str) {
+  char str2[128], path[256];
+  int file_length;
+  if (strlen(str) == 0 || !strstr(str, "voice/")) {
+    sprintf(str2, "%s.akb", str);
+  } else {
+    sprintf(str2, "%s", &str[6]);
+  }
+  
+  sprintf(path, "files/SOUND/BGM/%s", str2);
+  uint8_t res = isFileExist(path);
+  if (!res) {
+    sprintf(path, "files/SOUND/SE/%s", str2);
+    res = isFileExist(path);
+    if (!res) {
+      sprintf(path, "files/SOUND/VOICE/%s", str2);
+      res = isFileExist(path);
+    }
+  }
+
+  return res;
 }
 
 jni_bytearray *getSaveFileName() {
@@ -488,7 +503,7 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1,
                               &c_x2, &c_y2);
 
-  /* compute y (different characters have different heights */
+  /* compute y (different characters have different heights) */
   int y = roundf(ascent * scale) + c_y1;
 
   /* render character (stride and offset is important here) */

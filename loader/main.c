@@ -64,7 +64,7 @@ int ret0(void) { return 0; }
 int ret1(void) { return 1; }
 
 int __android_log_print(int prio, const char *tag, const char *fmt, ...) {
-//#ifdef DEBUG
+#ifdef DEBUG
   va_list list;
   char string[512];
 
@@ -73,7 +73,7 @@ int __android_log_print(int prio, const char *tag, const char *fmt, ...) {
   va_end(list);
 
   printf("%s\n", string);
-//#endif
+#endif
   return 0;
 }
 
@@ -152,7 +152,8 @@ enum MethodIDs {
   GET_KEY_EVENT,
   LOAD_SOUND,
   GET_SAVE_DATA_PATH,
-  GET_DOWNLOAD_STATE
+  GET_DOWNLOAD_STATE,
+  IS_SOUND_FILE_EXIST
 } MethodIDs;
 
 typedef struct {
@@ -185,6 +186,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"loadSound", LOAD_SOUND},
     {"getSaveDataPath", GET_SAVE_DATA_PATH},
     {"getDownloadState", GET_DOWNLOAD_STATE},
+	{"isSoundFileExist", IS_SOUND_FILE_EXIST},
     {"getStoragePath", GET_SAVEFILENAME}, // We use same path
 };
 
@@ -263,7 +265,6 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
   }
 }
 
-extern void setFPS(int32_t i);
 void CallStaticVoidMethodV(void *env, void *obj, int methodID,
                            uintptr_t *args) {
   switch (methodID) {
@@ -287,6 +288,8 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
 int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
                              uintptr_t *args) {
   switch (methodID) {
+  case IS_SOUND_FILE_EXIST:
+    return isSoundFileExist((char *)args[0]);
   default:
     return 0;
   }
@@ -671,9 +674,9 @@ int main_thread(SceSize args, void *argp) {
 }
 
 void patch_game(void) {
-//#ifdef DEBUG
+#ifdef DEBUG
   hook_thumb(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
-//#endif
+#endif
 }
 
 extern void *_ZdaPv;
@@ -984,7 +987,7 @@ int file_exists(const char *path) {
 }*/
 
 int main(int argc, char *argv[]) {
-  sceSysmoduleLoadModule(9);
+  //sceSysmoduleLoadModule(9);
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);

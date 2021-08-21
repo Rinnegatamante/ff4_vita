@@ -14,6 +14,8 @@ jni_bytearray *loadSound(char *str);
 jni_bytearray *loadRawFile(char *str);
 jni_bytearray *getSaveFileName();
 jni_bytearray *getSaveDataPath();
+uint8_t isSoundFileExist(char *str);
+void setFPS(int32_t i);
 void createSaveFile(size_t size);
 uint64_t getCurrentFrame(uint64_t j);
 int readHeader();
