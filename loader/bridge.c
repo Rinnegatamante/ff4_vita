@@ -432,7 +432,7 @@ void initFont() {
   if (info != NULL)
     return;
 
-  FILE *fontFile = fopen("ux0:/data/ff4/Roboto-Bold.ttf", "rb");
+  FILE *fontFile = fopen("ux0:/data/ff4/Roboto-Regular.ttf", "rb");
   fseek(fontFile, 0, SEEK_END);
   size = ftell(fontFile);       /* how long is the file ? */
   fseek(fontFile, 0, SEEK_SET); /* reset */

@@ -148,14 +148,15 @@ int getKeyEvent() {
     mask |= 0x8;
   if (pad.buttons & SCE_CTRL_SELECT)
     mask |= 0x4;
-  if (pad.buttons & SCE_CTRL_UP)
+  if (pad.buttons & SCE_CTRL_UP || pad.ly < 80)
     mask |= 0x40;
-  if (pad.buttons & SCE_CTRL_DOWN)
+  if (pad.buttons & SCE_CTRL_DOWN || pad.ly > 170)
     mask |= 0x80;
-  if (pad.buttons & SCE_CTRL_LEFT)
+  if (pad.buttons & SCE_CTRL_LEFT || pad.lx < 80)
     mask |= 0x20;
-  if (pad.buttons & SCE_CTRL_RIGHT)
+  if (pad.buttons & SCE_CTRL_RIGHT || pad.lx > 170)
     mask |= 0x10;
+
   return mask;
 }
 
