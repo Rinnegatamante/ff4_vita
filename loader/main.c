@@ -44,10 +44,9 @@
 #include "so_util.h"
 
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
-
 int _opensles_user_freq = 32000;
-
 static so_module ff4_mod;
+int has_low_res = 0;
 
 void *__wrap_memcpy(void *dest, const void *src, size_t n) {
   return sceClibMemcpy(dest, src, n);
@@ -219,7 +218,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"loadSound", LOAD_SOUND},
     {"getSaveDataPath", GET_SAVE_DATA_PATH},
     {"getDownloadState", GET_DOWNLOAD_STATE},
-  {"isSoundFileExist", IS_SOUND_FILE_EXIST},
+    {"isSoundFileExist", IS_SOUND_FILE_EXIST},
     {"getStoragePath", GET_SAVEFILENAME}, // We use same path
 };
 
@@ -347,10 +346,10 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
     return 0;
   case GET_VIEW_W:
   case GET_RES_WIDTH:
-    return SCREEN_W;
+    return has_low_res ? SCREEN_W : (SCREEN_W * 2);
   case GET_VIEW_H:
   case GET_RES_HEIGHT:
-    return SCREEN_H;
+    return has_low_res ? SCREEN_H : (SCREEN_H * 2);
   case GET_DOWNLOAD_STATE:
     return 0;
   case GET_KEY_EVENT:
@@ -643,7 +642,7 @@ int main_thread(SceSize args, void *argp) {
   memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
   sceAppUtilInit(&init_param, &boot_param);
 
-  vglInitExtended(0, SCREEN_W, SCREEN_H,
+  has_low_res = vglInitExtended(0, SCREEN_W * 2, SCREEN_H * 2,
                   MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
                   SCE_GXM_MULTISAMPLE_4X);
 
@@ -670,7 +669,7 @@ int main_thread(SceSize args, void *argp) {
     ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
               coordinates[2], coordinates[3]);
 
-    ff4_render(fake_env, 0, SCREEN_W, 0, 0, 0, 0);
+    ff4_render(fake_env, 0, has_low_res ? SCREEN_W : (SCREEN_W * 2), 0, 0, 0, 0);
     vglSwapBuffers(GL_FALSE);
   }
 
