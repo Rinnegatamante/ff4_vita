@@ -210,8 +210,7 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 
 jni_bytearray *loadFile(char *str) {
   //printf("loadFile(%s)\n", str);
-  char *lang[] = {"ja", "en",    "fr",    "de", "it",
-                  "es", "zh_CN", "zh_TW", "ko", "th"};
+  char *lang[] = {"ja", "en", "fr", "de", "it", "es", "zh_CN", "zh_TW", "ko", "th"};
 
   char *substring = strrchr(str, 46);
 
@@ -296,7 +295,6 @@ jni_bytearray *loadSound(char *str) {
 
 uint8_t isSoundFileExist(char *str) {
   char str2[128], path[256];
-  int file_length;
   if (strlen(str) == 0 || !strstr(str, "voice/")) {
     sprintf(str2, "%s.akb", str);
   } else {
@@ -431,7 +429,8 @@ void initFont() {
   }
 }
 
-static inline uint32_t utf8_decode_unsafe_2(const char *data) {
+static inline uint32_t utf8_decode_unsafe_2(const char *data)
+{
   uint32_t codepoint;
 
   codepoint = ((data[0] & 0x1F) << 6);
@@ -440,8 +439,28 @@ static inline uint32_t utf8_decode_unsafe_2(const char *data) {
   return codepoint;
 }
 
-jni_intarray *drawFont(char *word, int size, int i2, int i3) {
+static inline uint32_t utf8_decode_unsafe_3(const char *data)
+{
+  uint32_t codepoint;
 
+  codepoint = ((data[0] & 0x0F) << 12);
+  codepoint |= (data[1] & 0x3F) << 6;
+  codepoint |= (data[2] & 0x3F);
+  return codepoint;
+}
+
+static inline uint32_t utf8_decode_unsafe_4(const char *data)
+{
+  uint32_t codepoint;
+
+  codepoint = ((data[0] & 0x07) << 18);
+  codepoint |= (data[1] & 0x3F) << 12;
+  codepoint |= (data[2] & 0x3F) << 6;
+  codepoint |= (data[3] & 0x3F);
+  return codepoint;
+}
+
+jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   initFont();
 
   jni_intarray *texture = malloc(sizeof(jni_intarray));
@@ -466,8 +485,22 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   while (word[i]) {
     i++;
   }
-
-  int codepoint = i == 2 ? utf8_decode_unsafe_2(word) : word[0];
+  
+  int codepoint;
+  switch (i) {
+  case 2:
+    codepoint = utf8_decode_unsafe_2(word);
+	break;
+  case 3:
+    codepoint = utf8_decode_unsafe_3(word);
+	break;
+  case 4:
+    codepoint = utf8_decode_unsafe_4(word);
+    break;
+  default:
+    codepoint = word[0];
+    break;
+  }
 
   int ax;
   int lsb;
