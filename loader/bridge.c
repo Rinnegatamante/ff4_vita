@@ -17,6 +17,7 @@
 #include <unicode/ustring.h>
 #include <vitaGL.h>
 
+#include "config.h"
 #include "dialog.h"
 
 #define SAVE_FILENAME "ux0:/data/ff4"
@@ -264,12 +265,16 @@ jni_bytearray *loadRawFile(char *str) {
 }
 
 jni_bytearray *loadSound(char *str) {
+
   char str2[128], path[256];
   int file_length;
   if (strlen(str) == 0 || !strstr(str, "voice/")) {
     sprintf(str2, "%s.akb", str);
   } else {
-    sprintf(str2, "%s", &str[6]);
+    if (options.redub)
+      sprintf(str2, "ja%s", &str[8]);
+    else
+      sprintf(str2, "%s", &str[6]);
   }
   
   sprintf(path, "files/SOUND/BGM/%s", str2);
@@ -298,7 +303,10 @@ uint8_t isSoundFileExist(char *str) {
   if (strlen(str) == 0 || !strstr(str, "voice/")) {
     sprintf(str2, "%s.akb", str);
   } else {
-    sprintf(str2, "%s", &str[6]);
+    if (options.redub)
+      sprintf(str2, "ja%s", &str[8]);
+    else
+      sprintf(str2, "%s", &str[6]);
   }
   
   sprintf(path, "files/SOUND/BGM/%s", str2);
@@ -408,9 +416,9 @@ void initFont() {
   if (info != NULL)
     return;
 
-  FILE *fontFile = fopen("app0:/Roboto-Regular.ttf", "rb");
+  FILE *fontFile = fopen("app0:/NotoSansJP-Regular.ttf", "rb");
   if (!fontFile)
-    fontFile = fopen("ux0:/data/ff4/Roboto-Regular.ttf", "rb");
+    fontFile = fopen("ux0:/data/ff4/NotoSansJP-Regular.ttf", "rb");
 
   fseek(fontFile, 0, SEEK_END);
   size = ftell(fontFile);       /* how long is the file ? */
@@ -432,17 +440,14 @@ void initFont() {
 static inline uint32_t utf8_decode_unsafe_2(const char *data)
 {
   uint32_t codepoint;
-
   codepoint = ((data[0] & 0x1F) << 6);
   codepoint |= (data[1] & 0x3F);
-
   return codepoint;
 }
 
 static inline uint32_t utf8_decode_unsafe_3(const char *data)
 {
   uint32_t codepoint;
-
   codepoint = ((data[0] & 0x0F) << 12);
   codepoint |= (data[1] & 0x3F) << 6;
   codepoint |= (data[2] & 0x3F);
@@ -452,7 +457,6 @@ static inline uint32_t utf8_decode_unsafe_3(const char *data)
 static inline uint32_t utf8_decode_unsafe_4(const char *data)
 {
   uint32_t codepoint;
-
   codepoint = ((data[0] & 0x07) << 18);
   codepoint |= (data[1] & 0x3F) << 12;
   codepoint |= (data[2] & 0x3F) << 6;
@@ -470,13 +474,8 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int b_w = size; /* bitmap width */
   int b_h = size; /* bitmap height */
 
-  /* create a bitmap for the phrase */
-  unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
-
   /* calculate font scaling */
   float scale = stbtt_ScaleForPixelHeight(info, size);
-
-  int x = 0;
 
   int ascent, descent, lineGap;
   stbtt_GetFontVMetrics(info, &ascent, &descent, &lineGap);
@@ -484,10 +483,15 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int i = 0;
   while (word[i]) {
     i++;
+    if (i == 4)
+      break;
   }
   
   int codepoint;
   switch (i) {
+  case 0: // This should never happen
+    codepoint = 32;
+	break;
   case 2:
     codepoint = utf8_decode_unsafe_2(word);
 	break;
@@ -510,31 +514,31 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
     texture->elements[0] = roundf(ax * scale);
     return texture;
   }
+  
+  /* create a bitmap for the phrase */
+  unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
 
-  /* get bounding box for character (may be offset to account for chars that
-   * dip above or below the line */
+  /* get bounding box for character (may be offset to account for chars that dip above or below the line) */
   int c_x1, c_y1, c_x2, c_y2;
-  stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1,
-                              &c_x2, &c_y2);
+  stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1, &c_x2, &c_y2);
 
   /* compute y (different characters have different heights) */
   int y = roundf(ascent * scale) + c_y1;
 
   /* render character (stride and offset is important here) */
-  int byteOffset = x + roundf(lsb * scale) + (y * b_w);
+  int byteOffset = roundf(lsb * scale) + (y * b_w);
 
-  stbtt_MakeCodepointBitmap(info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1,
-                            b_w, scale, scale, codepoint);
+  stbtt_MakeCodepointBitmap(info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1, b_w, scale, scale, codepoint);
 
-  texture->elements[0] = (c_x2 - c_x1 + x + roundf(lsb * scale));
+  texture->elements[0] = (c_x2 - c_x1 + roundf(lsb * scale));
   texture->elements[1] = 0;
   texture->elements[2] = 0;
 
   for (int n = 0; n < size * size; n++) {
-    texture->elements[5 + n] =
-        RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
+    texture->elements[5 + n] = RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
   }
 
+  free(bitmap);
   return texture;
 }
 
@@ -553,6 +557,9 @@ char *getEditText() {
 }
 
 int getCurrentLanguage() {
+  if (options.lang)
+    return (options.lang - 1);
+
   int lang = -1;
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &lang);
   switch (lang) {
@@ -563,7 +570,7 @@ int getCurrentLanguage() {
   case SCE_SYSTEM_PARAM_LANG_GERMAN:
     return 3;
   case SCE_SYSTEM_PARAM_LANG_ITALIAN:
-    return 2;
+    return 4;
   case SCE_SYSTEM_PARAM_LANG_SPANISH:
     return 5;
   default:

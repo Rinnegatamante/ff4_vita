@@ -43,6 +43,47 @@
 #include "main.h"
 #include "so_util.h"
 
+int SCREEN_W = DEF_SCREEN_W;
+int SCREEN_H = DEF_SCREEN_H;
+
+config_opts options;
+void loadOptions() {
+  char buffer[30];
+  int value;
+  
+  FILE *f = fopen(CONFIG_FILE_PATH, "rb");
+  if (f) {
+    while (EOF != fscanf(f, "%[^=]=%d\n", buffer, &value)) {
+      if (strcmp("resolution", buffer) == 0) options.res = value;
+      else if (strcmp("bilinear", buffer) == 0) options.bilinear = value;
+      else if (strcmp("language", buffer) == 0) options.lang = value;
+      else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
+	  else if (strcmp("undub", buffer) == 0) options.redub = value;
+    }
+  } else {
+    options.res = 544;
+    options.bilinear = 0;
+    options.lang = 0;
+    options.msaa = 2;
+	options.redub = 0;
+  }
+  
+  switch (options.res) {
+  case 544:
+    SCREEN_W = 960;
+    SCREEN_H = 544;
+    break;
+  case 720:
+    SCREEN_W = 1280;
+    SCREEN_H = 725;
+    break;
+  case 1080:
+    SCREEN_W = 1080;
+    SCREEN_H = 1088;
+    break;
+  }
+}
+
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 int _opensles_user_freq = 32000;
 static so_module ff4_mod;
@@ -347,10 +388,10 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
     return 0;
   case GET_VIEW_W:
   case GET_RES_WIDTH:
-    return has_low_res ? SCREEN_W : (SCREEN_W * 2);
+    return has_low_res ? DEF_SCREEN_W : SCREEN_W;
   case GET_VIEW_H:
   case GET_RES_HEIGHT:
-    return has_low_res ? SCREEN_H : (SCREEN_H * 2);
+    return has_low_res ? DEF_SCREEN_H : SCREEN_H;
   case GET_DOWNLOAD_STATE:
     return 0;
   case GET_KEY_EVENT:
@@ -643,10 +684,17 @@ int main_thread(SceSize args, void *argp) {
   memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
   sceAppUtilInit(&init_param, &boot_param);
 
-  has_low_res = vglInitExtended(0, SCREEN_W * 2, SCREEN_H * 2,
-                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
-                  SCE_GXM_MULTISAMPLE_4X);
-
+  switch (options.msaa) {
+  case 0:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_NONE);
+    break;
+  case 1:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_2X);
+    break;
+  default:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+    break;
+  }
   int (*ff4_render)(char *, int, int, int, int, int, int) =
       (void *)so_symbol(&ff4_mod, "render");
   int (*ff4_touch)(int, int, int, int, float, float, float, float) = (void *)so_symbol(&ff4_mod, "touch");
@@ -670,7 +718,7 @@ int main_thread(SceSize args, void *argp) {
     ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
               coordinates[2], coordinates[3]);
 
-    ff4_render(fake_env, 0, has_low_res ? SCREEN_W : (SCREEN_W * 2), 0, 0, 0, 0);
+    ff4_render(fake_env, 0, has_low_res ? DEF_SCREEN_W : SCREEN_W, 0, 0, 0, 0);
     vglSwapBuffers(GL_FALSE);
   }
 
@@ -748,6 +796,16 @@ void *AAsset_seek() {
 void *AAsset_getLength() {
   printf("AAsset_getLength\n");
   return NULL;
+}
+
+void glTexParameteriHook(GLenum target, GLenum pname, GLint param) {
+  if (options.bilinear) {
+    if (pname == GL_TEXTURE_MIN_FILTER || pname == GL_TEXTURE_MAG_FILTER){
+      glTexParameteri(target, pname, GL_LINEAR);
+      return;
+    }
+  }
+  glTexParameteri(target, pname, param);
 }
 
 static DynLibFunction dynlib_functions[] = {
@@ -895,7 +953,7 @@ static DynLibFunction dynlib_functions[] = {
     {"glTranslatef", (uintptr_t)&glTranslatef},
     {"glTexCoordPointer", (uintptr_t)&glTexCoordPointer},
     {"glTexImage2D", (uintptr_t)&glTexImage2D},
-    {"glTexParameteri", (uintptr_t)&glTexParameteri},
+    {"glTexParameteri", (uintptr_t)&glTexParameteriHook},
     {"glTexSubImage2D", (uintptr_t)&glTexSubImage2D},
     {"glVertexPointer", (uintptr_t)&glVertexPointer},
     {"glViewport", (uintptr_t)&glViewport},
@@ -982,10 +1040,22 @@ int file_exists(const char *path) {
 }*/
 
 int main(int argc, char *argv[]) {
-  //sceSysmoduleLoadModule(9);
+  // Check if we want to start the companion app
+  sceAppUtilInit(&(SceAppUtilInitParam){}, &(SceAppUtilBootParam){});
+  SceAppUtilAppEventParam eventParam;
+  sceClibMemset(&eventParam, 0, sizeof(SceAppUtilAppEventParam));
+  sceAppUtilReceiveAppEvent(&eventParam);
+  if (eventParam.type == 0x05) {
+    char buffer[2048];
+    sceAppUtilAppEventParseLiveArea(&eventParam, buffer);
+    if (strstr(buffer, "-config"))
+      sceAppMgrLoadExec("app0:/companion.bin", NULL, NULL);
+  }
+
+  loadOptions();
+  //sceSysmoduleLoadModule(9); // Razor Capture
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
-  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
-                           SCE_TOUCH_SAMPLING_STATE_START);
+  sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
 
   //SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
   //sceKernelStartThread(crasher_thread, 0, NULL);
@@ -1008,17 +1078,14 @@ int main(int argc, char *argv[]) {
     fatal_error("Error could not load %s.", SO_PATH);
 
   so_relocate(&ff4_mod);
-  so_resolve(&ff4_mod, dynlib_functions,
-             sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
+  so_resolve(&ff4_mod, dynlib_functions, sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
 
   patch_game();
   so_flush_caches(&ff4_mod);
 
   so_initialize(&ff4_mod);
 
-  SceUID thid =
-      sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,
-                            0x40, 1024 * 1024, 0, 0, NULL);
+  SceUID thid = sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread, 0x40, 1024 * 1024, 0, 0, NULL);
   sceKernelStartThread(thid, 0, NULL);
   return sceKernelExitDeleteThread(0);
 }

@@ -10,8 +10,18 @@
 
 #define DATA_PATH "ux0:data/ff4"
 #define SO_PATH DATA_PATH "/" "libff4.so"
+#define CONFIG_FILE_PATH "ux0:data/ff4/options.cfg"
 
-#define SCREEN_W 960
-#define SCREEN_H 544
+#define DEF_SCREEN_W 960
+#define DEF_SCREEN_H 544
+
+typedef struct {
+  int res;
+  int bilinear;
+  int lang;
+  int msaa;
+  int redub;
+} config_opts;
+extern config_opts options;
 
 #endif

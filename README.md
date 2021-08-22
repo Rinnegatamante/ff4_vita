@@ -79,3 +79,4 @@ cmake .. && make
 
 - TheFloW for the .so loader which is the core mechanism used for this port.
 - frangarcj for FF3_Vita on which this port is heavily based off.
+- Darth Bellic for the Livearea assets.
