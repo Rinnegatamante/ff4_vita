@@ -143,7 +143,7 @@ int getKeyEvent() {
   if (pad.buttons & SCE_CTRL_CROSS)
     mask |= 0x1;
   if (pad.buttons & SCE_CTRL_CIRCLE)
-    mask |= 0x4000;
+    mask |= 0x2;
   if (pad.buttons & SCE_CTRL_START)
     mask |= 0x8;
   if (pad.buttons & SCE_CTRL_SELECT)
