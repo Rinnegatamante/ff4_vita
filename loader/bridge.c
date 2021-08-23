@@ -20,8 +20,7 @@
 #include "dialog.h"
 
 #define SAVE_FILENAME "ux0:/data/ff3"
-#define OBB_FILE                                                               \
-  "ux0:/data/ff3/main.20004.com.square_enix.android_googleplay.FFIII_GP.obb"
+#define FONT_FILE "app0:/NotoSansJP-Regular.ttf"
 
 unsigned char *header = NULL;
 int header_length = 0;
@@ -369,7 +368,7 @@ void initFont() {
   if (info != NULL)
     return;
 
-  FILE *fontFile = fopen("app0:/Roboto-Bold.ttf", "rb");
+  FILE *fontFile = fopen(FONT_FILE, "rb");
   fseek(fontFile, 0, SEEK_END);
   size = ftell(fontFile);       /* how long is the file ? */
   fseek(fontFile, 0, SEEK_SET); /* reset */
@@ -389,15 +388,29 @@ void initFont() {
 
 static inline uint32_t utf8_decode_unsafe_2(const char *data) {
   uint32_t codepoint;
-
   codepoint = ((data[0] & 0x1F) << 6);
   codepoint |= (data[1] & 0x3F);
+  return codepoint;
+}
 
+static inline uint32_t utf8_decode_unsafe_3(const char *data) {
+  uint32_t codepoint;
+  codepoint = ((data[0] & 0x0F) << 12);
+  codepoint |= (data[1] & 0x3F) << 6;
+  codepoint |= (data[2] & 0x3F);
+  return codepoint;
+}
+
+static inline uint32_t utf8_decode_unsafe_4(const char *data) {
+  uint32_t codepoint;
+  codepoint = ((data[0] & 0x07) << 18);
+  codepoint |= (data[1] & 0x3F) << 12;
+  codepoint |= (data[2] & 0x3F) << 6;
+  codepoint |= (data[3] & 0x3F);
   return codepoint;
 }
 
 jni_intarray *drawFont(char *word, int size, int i2, int i3) {
-
   initFont();
 
   jni_intarray *texture = malloc(sizeof(jni_intarray));
@@ -407,13 +420,8 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int b_w = size; /* bitmap width */
   int b_h = size; /* bitmap height */
 
-  /* create a bitmap for the phrase */
-  unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
-
   /* calculate font scaling */
   float scale = stbtt_ScaleForPixelHeight(info, size);
-
-  int x = 0;
 
   int ascent, descent, lineGap;
   stbtt_GetFontVMetrics(info, &ascent, &descent, &lineGap);
@@ -421,9 +429,28 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int i = 0;
   while (word[i]) {
     i++;
+    if (i == 4)
+      break;
   }
 
-  int codepoint = i == 2 ? utf8_decode_unsafe_2(word) : word[0];
+  int codepoint;
+  switch (i) {
+  case 0: // This should never happen
+    codepoint = 32;
+    break;
+  case 2:
+    codepoint = utf8_decode_unsafe_2(word);
+    break;
+  case 3:
+    codepoint = utf8_decode_unsafe_3(word);
+    break;
+  case 4:
+    codepoint = utf8_decode_unsafe_4(word);
+    break;
+  default:
+    codepoint = word[0];
+    break;
+  }
 
   int ax;
   int lsb;
@@ -434,22 +461,25 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
     return texture;
   }
 
-  /* get bounding box for character (may be offset to account for chars that
-   * dip above or below the line */
+  /* create a bitmap for the phrase */
+  unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
+
+  /* get bounding box for character (may be offset to account for chars that dip
+   * above or below the line) */
   int c_x1, c_y1, c_x2, c_y2;
   stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1,
                               &c_x2, &c_y2);
 
-  /* compute y (different characters have different heights */
+  /* compute y (different characters have different heights) */
   int y = roundf(ascent * scale) + c_y1;
 
   /* render character (stride and offset is important here) */
-  int byteOffset = x + roundf(lsb * scale) + (y * b_w);
+  int byteOffset = roundf(lsb * scale) + (y * b_w);
 
   stbtt_MakeCodepointBitmap(info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1,
                             b_w, scale, scale, codepoint);
 
-  texture->elements[0] = (c_x2 - c_x1 + x + roundf(lsb * scale));
+  texture->elements[0] = (c_x2 - c_x1 + roundf(lsb * scale));
   texture->elements[1] = 0;
   texture->elements[2] = 0;
 
@@ -458,6 +488,7 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
         RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
   }
 
+  free(bitmap);
   return texture;
 }
 
