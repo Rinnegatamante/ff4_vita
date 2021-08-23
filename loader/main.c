@@ -58,16 +58,18 @@ void loadOptions() {
       else if (strcmp("bilinear", buffer) == 0) options.bilinear = value;
       else if (strcmp("language", buffer) == 0) options.lang = value;
       else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
-	  else if (strcmp("undub", buffer) == 0) options.redub = value;
-	  else if (strcmp("postfx", buffer) == 0) options.postfx = value;
+      else if (strcmp("undub", buffer) == 0) options.redub = value;
+      else if (strcmp("postfx", buffer) == 0) options.postfx = value;
+      else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
     }
   } else {
     options.res = 544;
     options.bilinear = 1;
     options.lang = 0;
     options.msaa = 2;
-	options.redub = 0;
-	options.postfx = 0;
+    options.redub = 0;
+    options.postfx = 0;
+    options.battle_fps = 0;
   }
   
   switch (options.res) {
@@ -83,6 +85,24 @@ void loadOptions() {
     SCREEN_W = 1080;
     SCREEN_H = 1088;
     break;
+  }
+  
+  switch (options.battle_fps) {
+  case 1:
+    options.battle_fps = 20;
+    break;
+  case 2:
+    options.battle_fps = 25;
+    break;
+  case 3:
+    options.battle_fps = 30;
+    break;
+  default:
+    break;  
+  }
+
+  if (options.lang > 5) { // Skip unsupported languages
+    options.lang += 3;
   }
 }
 
@@ -736,32 +756,32 @@ int main_thread(SceSize args, void *argp) {
   
   if (options.postfx) {
     glGenTextures(1, &fb_tex);
-	glBindTexture(GL_TEXTURE_2D, fb_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_W, SCREEN_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glGenFramebuffers(1, &fb);
-	glBindFramebuffer(GL_FRAMEBUFFER, fb);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fb_tex, 0);
-	
-	frag = glCreateShader(GL_FRAGMENT_SHADER);
-	vert = glCreateShader(GL_VERTEX_SHADER);
-	char path[512];
+    glBindTexture(GL_TEXTURE_2D, fb_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_W, SCREEN_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glGenFramebuffers(1, &fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fb_tex, 0);
+
+    frag = glCreateShader(GL_FRAGMENT_SHADER);
+    vert = glCreateShader(GL_VERTEX_SHADER);
+    char path[512];
     SceIoDirent d;
-	SceUID fd = sceIoDopen("ux0:data/ff4/shaders");
-	while (sceIoDread(fd, &d) > 0) {
-	  sprintf(path, "%d_", options.postfx);
-	  if (strstr(d.d_name, path)) {
-		sprintf(path, "ux0:data/ff4/shaders/%s", d.d_name);
+    SceUID fd = sceIoDopen("ux0:data/ff4/shaders");
+    while (sceIoDread(fd, &d) > 0) {
+      sprintf(path, "%d_", options.postfx);
+      if (strstr(d.d_name, path)) {
+        sprintf(path, "ux0:data/ff4/shaders/%s", d.d_name);
         loadShader(strncmp(&d.d_name[strlen(d.d_name) - 5], "_f.cg", 5) == 0 ? 0 : 1, path);
       }
-	}
-	sceIoDclose(fd);
+    }
+    sceIoDclose(fd);
 
-	postfx_prog = glCreateProgram();
-	glAttachShader(postfx_prog, frag);
-	glAttachShader(postfx_prog, vert);
+    postfx_prog = glCreateProgram();
+    glAttachShader(postfx_prog, frag);
+    glAttachShader(postfx_prog, vert);
     glBindAttribLocation(postfx_prog, 0, "position");
     glBindAttribLocation(postfx_prog, 1, "texcoord");
-	glLinkProgram(postfx_prog);
+    glLinkProgram(postfx_prog);
   }
 
   int (*ff4_render)(char *, int, int) =
@@ -786,20 +806,20 @@ int main_thread(SceSize args, void *argp) {
 
     ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
               coordinates[2], coordinates[3]);
-	
+    
     ff4_render(fake_env, 0, has_low_res ? DEF_SCREEN_W : SCREEN_W);
-	if (options.postfx) {
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glBindTexture(GL_TEXTURE_2D, fb_tex);
-		glUseProgram(postfx_prog);
-		glEnableVertexAttribArray(0);
+    if (options.postfx) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, fb_tex);
+        glUseProgram(postfx_prog);
+        glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, &postfx_pos[0]);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, &postfx_texcoord[0]);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glUseProgram(0);
-		glBindFramebuffer(GL_FRAMEBUFFER, fb);
-	}
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glUseProgram(0);
+        glBindFramebuffer(GL_FRAMEBUFFER, fb);
+    }
     vglSwapBuffers(GL_FALSE);
   }
 

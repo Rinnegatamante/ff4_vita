@@ -211,7 +211,7 @@ unsigned char *decodeString(unsigned char *bArr, int *bArr_length) {
 
 jni_bytearray *loadFile(char *str) {
   //printf("loadFile(%s)\n", str);
-  char *lang[] = {"ja", "en", "fr", "de", "it", "es", "zh_CN", "zh_TW", "ko", "th"};
+  char *lang[] = {"ja", "en", "fr", "de", "it", "es", "zh_CN", "zh_TW", "ko", "pt_BR", "ru", "th"};
 
   char *substring = strrchr(str, 46);
 
@@ -359,7 +359,11 @@ uint64_t j3 = 0;
 int32_t framerate = 30;
 
 void setFPS(int32_t i) {
-  framerate = i;
+  if (options.battle_fps && i == 15) {
+    framerate = options.battle_fps;
+  } else {
+    framerate = i;
+  }
 }
 
 uint64_t getCurrentFrame(uint64_t j) {
@@ -491,13 +495,13 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   switch (i) {
   case 0: // This should never happen
     codepoint = 32;
-	break;
+    break;
   case 2:
     codepoint = utf8_decode_unsafe_2(word);
-	break;
+    break;
   case 3:
     codepoint = utf8_decode_unsafe_3(word);
-	break;
+    break;
   case 4:
     codepoint = utf8_decode_unsafe_4(word);
     break;
@@ -573,6 +577,11 @@ int getCurrentLanguage() {
     return 4;
   case SCE_SYSTEM_PARAM_LANG_SPANISH:
     return 5;
+  case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_BR:
+  case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_PT:
+    return 9;
+  case SCE_SYSTEM_PARAM_LANG_RUSSIAN:
+    return 10;
   default:
     return 1;
   }

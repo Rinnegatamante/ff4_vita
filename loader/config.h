@@ -5,8 +5,6 @@
 
 #define MEMORY_NEWLIB_MB 280
 #define MEMORY_VITAGL_THRESHOLD_MB 8
-#define AUDIO_SAMPLE_RATE 44100
-#define AUDIO_SAMPLES_PER_BUF 8192
 
 #define DATA_PATH "ux0:data/ff4"
 #define SO_PATH DATA_PATH "/" "libff4.so"
@@ -22,6 +20,7 @@ typedef struct {
   int msaa;
   int redub;
   int postfx;
+  int battle_fps; 
 } config_opts;
 extern config_opts options;
 

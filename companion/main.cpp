@@ -34,7 +34,7 @@ char *AntiAliasingName[ANTI_ALIASING_NUM] = {
   "MSAA 4x"
 };
 
-#define LANGUAGES_NUM 7
+#define LANGUAGES_NUM 9
 char *LanguageName[LANGUAGES_NUM] = {
   "Auto",
   "Japanese",
@@ -42,7 +42,17 @@ char *LanguageName[LANGUAGES_NUM] = {
   "French",
   "German",
   "Italian",
-  "Spanish"
+  "Spanish",
+  "Portuguese",
+  "Russian"
+};
+
+#define BATTLE_FPS_NUM 4
+char *BattleFpsName[BATTLE_FPS_NUM] = {
+  "15",
+  "20",
+  "25",
+  "30"
 };
 
 typedef struct {
@@ -52,6 +62,7 @@ typedef struct {
   int msaa;
   int redub;
   int postfx;
+  int battle_fps;
 } config_opts;
 config_opts options;
 
@@ -71,6 +82,7 @@ void loadOptions() {
       else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
       else if (strcmp("undub", buffer) == 0) options.redub = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
+	  else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
     }
   } else {
     options.res = 0;
@@ -79,6 +91,7 @@ void loadOptions() {
     options.msaa = 2;
     options.redub = 0;
     options.postfx = 0;
+	options.battle_fps = 0;
   }
     
   bilinear_filter = options.bilinear ? true : false;
@@ -98,6 +111,7 @@ void saveOptions(void) {
     fprintf(config, "%s=%d\n", "antialiasing", options.msaa);
     fprintf(config, "%s=%d\n", "undub", options.redub);
     fprintf(config, "%s=%d\n", "postfx", options.postfx);
+	fprintf(config, "%s=%d\n", "battle_fps", options.battle_fps);
     fclose(config);
   }
 }
@@ -108,7 +122,8 @@ char *options_descs[] = {
   "Anti-Aliasing is a technique used to reduce graphical artifacts surrounding 3D models. Greatly improves graphics quality at the cost of some GPU power.\nThe default value is: MSAA 4x.", // antialiasing
   "Language to use for the game. When Auto is used, language will be decided based on system language.\nThe default value is: Auto.", // language
   "When enabled, original japanese dub will be used for cutscenes.\nThe default value is: Disabled.", // undub
-  "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled." // postfx
+  "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled.", // postfx
+  "Alters the game framerate during battles.\nThe default value is: 15." // battle_fps
 };
 
 enum {
@@ -117,7 +132,8 @@ enum {
   OPT_ANTIALIASING,
   OPT_LANGUAGE,
   OPT_UNDUB,
-  OPT_POSTFX
+  OPT_POSTFX,
+  OPT_BATTLE_FPS
 };
 
 char *desc = nullptr;
@@ -245,6 +261,20 @@ printf("%d\n", options.res);
     ImGui::Checkbox("##check1", &jap_dub);
     SetDescription(OPT_UNDUB);
     ImGui::PopStyleVar();
+	
+	ImGui::Text("FPS in Battle:"); ImGui::SameLine();
+    if (ImGui::BeginCombo("##combo4", BattleFpsName[options.battle_fps])) {
+      for (int n = 0; n < BATTLE_FPS_NUM; n++) {
+        bool is_selected = options.battle_fps == n;
+        if (ImGui::Selectable(BattleFpsName[n], is_selected))
+          options.battle_fps = n;
+        SetDescription(OPT_BATTLE_FPS);
+        if (is_selected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndCombo();
+    }
+    SetDescription(OPT_BATTLE_FPS);
     
     ImGui::Separator();
 
