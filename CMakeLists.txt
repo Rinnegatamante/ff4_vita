@@ -60,6 +60,30 @@ target_link_libraries(FF3.elf
 )
 
 vita_create_self(eboot.bin FF3.elf UNSAFE)
+
+add_executable(companion
+  companion/main.cpp
+)
+
+target_link_libraries(companion
+  imgui
+  vitaGL
+  vitashark
+  mathneon
+  SceAppMgr_stub
+  SceAudio_stub
+  SceCtrl_stub
+  SceCommonDialog_stub
+  SceDisplay_stub
+  SceKernelDmacMgr_stub
+  SceGxm_stub
+  SceShaccCg_stub
+  SceSysmodule_stub
+  SceTouch_stub
+)
+
+vita_create_self(companion.bin companion UNSAFE)
+
 vita_create_vpk(FF3.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
@@ -68,24 +92,24 @@ vita_create_vpk(FF3.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
        ${CMAKE_SOURCE_DIR}/NotoSansJP-Regular.ttf NotoSansJP-Regular.ttf
-       ${CMAKE_SOURCE_DIR}/Roboto-Bold.ttf Roboto-Bold.ttf
+       ${CMAKE_BINARY_DIR}/companion.bin companion.bin
        ${CMAKE_SOURCE_DIR}/icudt59l/cnvalias.icu icudt59l/cnvalias.icu
        ${CMAKE_SOURCE_DIR}/icudt59l/confusables.cfu icudt59l/confusables.cfu
        ${CMAKE_SOURCE_DIR}/icudt59l/unames.icu icudt59l/unames.icu
        ${CMAKE_SOURCE_DIR}/icudt59l/ibm-943_P15A-2003.cnv icudt59l/ibm-943_P15A-2003.cnv
        ${CMAKE_SOURCE_DIR}/icudt59l/ibm-5348_P100-1997.cnv icudt59l/ibm-5348_P100-1997.cnv
-
 )
 
 add_custom_target(copy
-  COMMAND cp eboot.bin E:/app/${VITA_TITLEID}/eboot.bin
-  DEPENDS eboot.bin
+  COMMAND echo "destroy" | nc $(PSVITAIP) 1338
+  COMMAND curl -T eboot.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/eboot.bin  DEPENDS eboot.bin
+  COMMAND curl -T companion.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/companion.bin  DEPENDS companion.bin
 )
 
 add_custom_target(launch
   COMMAND echo "screen on" | nc $(PSVITAIP) 1338
   COMMAND echo "destroy" | nc $(PSVITAIP) 1338
-  COMMAND curl -T eboot.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/eboot.bin
+  COMMAND curl -T eboot.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/eboot.bin   DEPENDS eboot.bin	
+  COMMAND curl -T companion.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/companion.bin  DEPENDS companion.bin
   COMMAND echo "launch ${VITA_TITLEID}" | nc $(PSVITAIP) 1338
-  DEPENDS eboot.bin	
 )

@@ -1,14 +1,15 @@
-/* main.c -- Battlefield: Bad Company 2 .so loader
+/* main.c -- Final Fantasy 3 .so loader
  *
  * Copyright (C) 2021 Andy Nguyen
+ * Copyright (C) 2021 Francisco José García García
  *
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
 
 #include <kubridge.h>
+#include <psp2/appmgr.h>
 #include <psp2/apputil.h>
-#include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
@@ -42,6 +43,49 @@
 #include "dialog.h"
 #include "main.h"
 #include "so_util.h"
+
+int SCREEN_W = DEF_SCREEN_W;
+int SCREEN_H = DEF_SCREEN_H;
+
+config_opts options;
+void loadOptions() {
+  char buffer[30];
+  int value;
+
+  FILE *f = fopen(CONFIG_FILE_PATH, "rb");
+  if (f) {
+    while (EOF != fscanf(f, "%[^=]=%d\n", buffer, &value)) {
+      if (strcmp("resolution", buffer) == 0)
+        options.res = value;
+      else if (strcmp("bilinear", buffer) == 0)
+        options.bilinear = value;
+      else if (strcmp("language", buffer) == 0)
+        options.lang = value;
+      else if (strcmp("antialiasing", buffer) == 0)
+        options.msaa = value;
+    }
+  } else {
+    options.res = 544;
+    options.bilinear = 0;
+    options.lang = 0;
+    options.msaa = 2;
+  }
+
+  switch (options.res) {
+  case 544:
+    SCREEN_W = 960;
+    SCREEN_H = 544;
+    break;
+  case 720:
+    SCREEN_W = 1280;
+    SCREEN_H = 725;
+    break;
+  case 1080:
+    SCREEN_W = 1080;
+    SCREEN_H = 1088;
+    break;
+  }
+}
 
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 
@@ -120,6 +164,7 @@ enum MethodIDs {
   DRAW_FONT,
   CREATE_EDIT_TEXT,
   GET_EDIT_TEXT,
+  START_DOWNLOAD,
 } MethodIDs;
 
 typedef struct {
@@ -139,7 +184,7 @@ static NameToMethodID name_to_method_ids[] = {
     {"drawFont", DRAW_FONT},
     {"createEditText", CREATE_EDIT_TEXT},
     {"getEditText", GET_EDIT_TEXT},
-};
+    {"startDownload", START_DOWNLOAD}};
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
 
@@ -218,6 +263,9 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
     break;
   case CREATE_EDIT_TEXT:
     createEditText((char *)args[0]);
+    break;
+  case START_DOWNLOAD:
+    loadCompanionApp();
     break;
   default:
     return;
@@ -527,13 +575,6 @@ char *getcwd(char *buf, size_t size) {
   return NULL;
 }
 
-static int audio_port = 0;
-
-void SetShortArrayRegion(void *env, int array, size_t start, size_t len,
-                         const uint8_t *buf) {
-  sceAudioOutOutput(audio_port, buf);
-}
-
 int this_width;
 int this_height;
 
@@ -555,18 +596,26 @@ void setup_viewport(int width, int height) {
 }
 
 int main_thread(SceSize args, void *argp) {
-  SceAppUtilInitParam init_param;
-  SceAppUtilBootParam boot_param;
-  memset(&init_param, 0, sizeof(SceAppUtilInitParam));
-  memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
-  sceAppUtilInit(&init_param, &boot_param);
 
-  vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE,
-                                SHARK_ENABLE);
-  vglUseVram(GL_TRUE);
-  vglInitExtended(0, SCREEN_W, SCREEN_H,
-                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
-                  SCE_GXM_MULTISAMPLE_4X);
+  int has_low_res;
+
+  switch (options.msaa) {
+  case 0:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H,
+                                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
+                                  SCE_GXM_MULTISAMPLE_NONE);
+    break;
+  case 1:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H,
+                                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
+                                  SCE_GXM_MULTISAMPLE_2X);
+    break;
+  default:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H,
+                                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
+                                  SCE_GXM_MULTISAMPLE_4X);
+    break;
+  }
 
   int (*ff3_render)(char *, int, int, int, int) =
       (void *)so_symbol(&ff3_mod, "render");
@@ -574,7 +623,8 @@ int main_thread(SceSize args, void *argp) {
                    unsigned int) = (void *)so_symbol(&ff3_mod, "touch");
 
   readHeader();
-  setup_viewport(SCREEN_W, SCREEN_H);
+  setup_viewport(has_low_res ? DEF_SCREEN_W : SCREEN_W,
+                 has_low_res ? DEF_SCREEN_H : SCREEN_H);
   while (1) {
 
     SceTouchData touch;
@@ -663,15 +713,6 @@ extern void *__stack_chk_fail;
 static int __stack_chk_guard_fake = 0x42424242;
 static FILE __sF_fake[0x100][3];
 
-struct tm *localtime_hook(time_t *timer) {
-  struct tm *res = localtime(timer);
-  if (res)
-    return res;
-  // Fix an uninitialized variable bug.
-  time(timer);
-  return localtime(timer);
-}
-
 void *mmap(void *addr, size_t length, int prot, int flags, int fd,
            off_t offset) {
   return malloc(length);
@@ -710,6 +751,16 @@ void *AAsset_seek() {
 void *AAsset_getLength() {
   printf("AAsset_getLength\n");
   return NULL;
+}
+
+void glTexParameteriHook(GLenum target, GLenum pname, GLint param) {
+  if (options.bilinear) {
+    if (pname == GL_TEXTURE_MIN_FILTER || pname == GL_TEXTURE_MAG_FILTER) {
+      glTexParameteri(target, pname, GL_LINEAR);
+      return;
+    }
+  }
+  glTexParameteri(target, pname, param);
 }
 
 static so_default_dynlib default_dynlib[] = {
@@ -851,10 +902,10 @@ static so_default_dynlib default_dynlib[] = {
     {"glTranslatef", (uintptr_t)&glTranslatef},
     {"glTexCoordPointer", (uintptr_t)&glTexCoordPointer},
     {"glTexImage2D", (uintptr_t)&glTexImage2D},
-    {"glTexParameteri", (uintptr_t)&glTexParameteri},
+    {"glTexParameteri", (uintptr_t)&glTexParameteriHook},
     {"glTexSubImage2D", (uintptr_t)&glTexSubImage2D},
     {"glVertexPointer", (uintptr_t)&glVertexPointer},
-    {"localtime", (uintptr_t)&localtime_hook},
+    {"localtime", (uintptr_t)&localtime},
     {"lrand48", (uintptr_t)&lrand48},
     {"malloc", (uintptr_t)&malloc},
     {"memchr", (uintptr_t)&memchr},
@@ -921,6 +972,21 @@ int file_exists(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
+
+  // Check if we want to start the companion app
+  sceAppUtilInit(&(SceAppUtilInitParam){}, &(SceAppUtilBootParam){});
+  SceAppUtilAppEventParam eventParam;
+  sceClibMemset(&eventParam, 0, sizeof(SceAppUtilAppEventParam));
+  sceAppUtilReceiveAppEvent(&eventParam);
+  if (eventParam.type == 0x05) {
+    char buffer[2048];
+    sceAppUtilAppEventParseLiveArea(&eventParam, buffer);
+    if (strstr(buffer, "-config"))
+      sceAppMgrLoadExec("app0:/companion.bin", NULL, NULL);
+  }
+
+  loadOptions();
+
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);

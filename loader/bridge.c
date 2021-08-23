@@ -1,6 +1,7 @@
 #include "bridge.h"
 #include <limits.h>
 #include <math.h>
+#include <psp2/appmgr.h>
 #include <psp2/apputil.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/system_param.h>
@@ -17,9 +18,11 @@
 #include <unicode/ustring.h>
 #include <vitaGL.h>
 
+#include "config.h"
 #include "dialog.h"
 
 #define SAVE_FILENAME "ux0:/data/ff3"
+#define OBB_FILE "ux0:/data/ff3/main.obb"
 #define FONT_FILE "app0:/NotoSansJP-Regular.ttf"
 
 unsigned char *header = NULL;
@@ -507,6 +510,10 @@ char *getEditText() {
 }
 
 int getCurrentLanguage() {
+
+  if (options.lang)
+    return (options.lang - 1);
+
   int lang = -1;
   sceAppUtilSystemParamGetInt(SCE_SYSTEM_PARAM_ID_LANG, &lang);
   switch (lang) {
@@ -523,4 +530,8 @@ int getCurrentLanguage() {
   default:
     return 1;
   }
+}
+
+void loadCompanionApp() {
+  sceAppMgrLoadExec("app0:/companion.bin", NULL, NULL);
 }

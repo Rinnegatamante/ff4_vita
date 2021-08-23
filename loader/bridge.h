@@ -30,4 +30,6 @@ char *getEditText();
 
 int getCurrentLanguage();
 
+void loadCompanionApp();
+
 #endif
