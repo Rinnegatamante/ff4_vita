@@ -527,7 +527,7 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   stbtt_GetCodepointBitmapBox(info, codepoint, scale, scale, &c_x1, &c_y1, &c_x2, &c_y2);
 
   /* compute y (different characters have different heights) */
-  int y = roundf(ascent * scale) + c_y1;
+  int y = roundf(ascent * scale) + c_y1 - (200 * scale);
 
   /* render character (stride and offset is important here) */
   int byteOffset = roundf(lsb * scale) + (y * b_w);
