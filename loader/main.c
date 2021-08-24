@@ -22,6 +22,7 @@
 #include <OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
+#include <arm_neon.h>
 #include <malloc.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -704,7 +705,6 @@ uint16_t *postfx_indices;
 float *postfx_texcoords, *postfx_vertices;
 
 void loadShader(int is_vertex, char *file) {
-  printf("loading: %s postfx shader\n", file, is_vertex);
   SceIoStat st;
   sceIoGetstat(file, &st);
   char *code = (char*)malloc(st.st_size);
@@ -826,7 +826,29 @@ int main_thread(SceSize args, void *argp) {
   return 0;
 }
 
+int16_t FX_AtanIdx(int a1) {
+  float v1;
+  float v2;
+  
+  int32x2_t src = {a1, 1};
+  float32x2_t dst;
+  
+  dst = vcvt_n_f32_s32(src, 0xCu);
+  
+  v1 = atanf(dst[0]) * 10430.3784f;
+  if ( v1 <= 0.0f )
+    v2 = v1 - 0.5f;
+  else
+    v2 = v1 + 0.5f;
+
+  int16_t r = (int16_t)((int)v2);
+  if (!r)
+    r++;
+  return r;
+}
+
 void patch_game(void) {
+  hook_thumb(ff4_mod.text_base + 0x149590, (uintptr_t)&FX_AtanIdx);
 #ifdef DEBUG
   hook_thumb(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
 #endif
@@ -849,6 +871,7 @@ extern void *__aeabi_idivmod;
 extern void *__aeabi_l2d;
 extern void *__aeabi_l2f;
 extern void *__aeabi_ldivmod;
+extern void *__aeabi_ldiv0;
 extern void *__aeabi_uidiv;
 extern void *__aeabi_uidivmod;
 extern void *__aeabi_uldivmod;
@@ -987,6 +1010,7 @@ static DynLibFunction dynlib_functions[] = {
     {"__aeabi_idivmod", (uintptr_t)&__aeabi_idivmod},
     {"__aeabi_l2d", (uintptr_t)&__aeabi_l2d},
     {"__aeabi_l2f", (uintptr_t)&__aeabi_l2f},
+	{"__aeabi_ldiv0", (uintptr_t)&__aeabi_ldiv0},
     {"__aeabi_ldivmod", (uintptr_t)&__aeabi_ldivmod},
     {"__aeabi_uidiv", (uintptr_t)&__aeabi_uidiv},
     {"__aeabi_uidivmod", (uintptr_t)&__aeabi_uidivmod},
