@@ -313,8 +313,6 @@ int GetStaticMethodID(void *env, void *class, const char *name,
 
 int CallBooleanMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   switch (methodID) {
-  case IS_DEVICE_ANDROID_TV:
-    return isDeviceAndroidTV();
   case IS_OK_ACHIEVEMENT:
     return 1;
   default:
@@ -387,6 +385,8 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
   switch (methodID) {
   case IS_SOUND_FILE_EXIST:
     return isSoundFileExist((char *)args[0]);
+  case IS_DEVICE_ANDROID_TV:
+    return isDeviceAndroidTV();
   default:
     return 0;
   }
@@ -736,6 +736,8 @@ float postfx_texcoord[8] = {
 };
 
 int main_thread(SceSize args, void *argp) {
+  initFont();
+  
   SceAppUtilInitParam init_param;
   SceAppUtilBootParam boot_param;
   memset(&init_param, 0, sizeof(SceAppUtilInitParam));

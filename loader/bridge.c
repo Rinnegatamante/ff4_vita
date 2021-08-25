@@ -469,8 +469,6 @@ static inline uint32_t utf8_decode_unsafe_4(const char *data)
 }
 
 jni_intarray *drawFont(char *word, int size, int i2, int i3) {
-  initFont();
-
   jni_intarray *texture = malloc(sizeof(jni_intarray));
   texture->size = size * size + 5;
   texture->elements = malloc(texture->size * sizeof(int));
