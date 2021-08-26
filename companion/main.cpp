@@ -63,11 +63,13 @@ typedef struct {
   int redub;
   int postfx;
   int battle_fps;
+  int debug_menu;
 } config_opts;
 config_opts options;
 
 bool bilinear_filter;
 bool jap_dub;
+bool debug_menu;
 
 void loadOptions() {
   char buffer[30];
@@ -83,6 +85,7 @@ void loadOptions() {
       else if (strcmp("undub", buffer) == 0) options.redub = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
 	  else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
+      else if (strcmp("debug_menu", buffer) == 0) options.debug_menu = value;
     }
   } else {
     options.res = 0;
@@ -92,10 +95,12 @@ void loadOptions() {
     options.redub = 0;
     options.postfx = 0;
 	options.battle_fps = 0;
+	options.debug_menu = 0;
   }
     
   bilinear_filter = options.bilinear ? true : false;
   jap_dub = options.redub ? true : false;
+  debug_menu = options.debug_menu ? true : false;
 }
 
 void saveOptions(void) {
@@ -111,7 +116,8 @@ void saveOptions(void) {
     fprintf(config, "%s=%d\n", "antialiasing", options.msaa);
     fprintf(config, "%s=%d\n", "undub", options.redub);
     fprintf(config, "%s=%d\n", "postfx", options.postfx);
-	fprintf(config, "%s=%d\n", "battle_fps", options.battle_fps);
+    fprintf(config, "%s=%d\n", "battle_fps", options.battle_fps);
+    fprintf(config, "%s=%d\n", "debug_menu", options.debug_menu);
     fclose(config);
   }
 }
@@ -123,7 +129,8 @@ char *options_descs[] = {
   "Language to use for the game. When Auto is used, language will be decided based on system language.\nThe default value is: Auto.", // language
   "When enabled, original japanese dub will be used for cutscenes.\nThe default value is: Disabled.", // undub
   "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled.", // postfx
-  "Alters the game framerate during battles.\nThe default value is: 15." // battle_fps
+  "Alters the game framerate during battles.\nThe default value is: 15.", // battle_fps
+  "When enabled, internal development debug menu is accessible by pressing SELECT + UP/DOWN.\nThe default value is: Disabled." // debug_menu
 };
 
 enum {
@@ -133,7 +140,8 @@ enum {
   OPT_LANGUAGE,
   OPT_UNDUB,
   OPT_POSTFX,
-  OPT_BATTLE_FPS
+  OPT_BATTLE_FPS,
+  OPT_DEBUG_MENU
 };
 
 char *desc = nullptr;
@@ -275,6 +283,12 @@ printf("%d\n", options.res);
       ImGui::EndCombo();
     }
     SetDescription(OPT_BATTLE_FPS);
+	
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+    ImGui::Text("Debug Menu:"); ImGui::SameLine();
+    ImGui::Checkbox("##check1", &debug_menu);
+    SetDescription(OPT_DEBUG_MENU);
+    ImGui::PopStyleVar();
     
     ImGui::Separator();
 

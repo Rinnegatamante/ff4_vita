@@ -20,7 +20,8 @@ typedef struct {
   int msaa;
   int redub;
   int postfx;
-  int battle_fps; 
+  int battle_fps;
+  int debug_menu;
 } config_opts;
 extern config_opts options;
 

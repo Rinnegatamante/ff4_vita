@@ -62,6 +62,7 @@ void loadOptions() {
       else if (strcmp("undub", buffer) == 0) options.redub = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
       else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
+      else if (strcmp("debug_menu", buffer) == 0) options.debug_menu = value;
     }
   } else {
     options.res = 544;
@@ -71,6 +72,7 @@ void loadOptions() {
     options.redub = 0;
     options.postfx = 0;
     options.battle_fps = 0;
+    options.debug_menu = 0;
   }
   
   switch (options.res) {
@@ -850,6 +852,9 @@ int16_t FX_AtanIdx(int a1) {
 }
 
 void patch_game(void) {
+  if (!options.debug_menu)
+    hook_thumb(ff4_mod.text_base + 0x246eec, (uintptr_t)&ret0);
+
   hook_thumb(ff4_mod.text_base + 0x149590, (uintptr_t)&FX_AtanIdx);
 #ifdef DEBUG
   hook_thumb(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
