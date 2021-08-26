@@ -286,7 +286,7 @@ printf("%d\n", options.res);
 	
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
     ImGui::Text("Debug Menu:"); ImGui::SameLine();
-    ImGui::Checkbox("##check1", &debug_menu);
+    ImGui::Checkbox("##check2", &debug_menu);
     SetDescription(OPT_DEBUG_MENU);
     ImGui::PopStyleVar();
     
