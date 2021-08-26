@@ -26,6 +26,7 @@ In order to properly install the game, you'll have to follow these steps precise
 - Copy the `.obb` file to `ux0:data/ff4` and rename it to `main.obb`.
 - Open the apk and extract `libff4.so` from the `lib/armeabi-v7a` folder to `ux0:data/ff4`.
 - Install [FF4.vpk](https://github.com/Rinnegatamante/ff4_vita/releases) on your *PS Vita*.
+- **Optional**: Extract the data files folder in `ux0:data` so that you'll end up having the folder `ux0:data/ff4/shaders` to have support for PostFX effects.
 
 ## Build Instructions (For Developers)
 
