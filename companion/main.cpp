@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
     }
   }
   sceIoDclose(fd);
-printf("%d\n", options.res);
+
   while (exit_code == 0xDEAD) {
     desc = nullptr;
     ImGui_ImplVitaGL_NewFrame();
