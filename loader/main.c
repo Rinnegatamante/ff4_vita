@@ -85,7 +85,7 @@ void loadOptions() {
     SCREEN_H = 725;
     break;
   case 1080:
-    SCREEN_W = 1080;
+    SCREEN_W = 1920;
     SCREEN_H = 1088;
     break;
   }
