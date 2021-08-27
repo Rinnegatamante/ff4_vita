@@ -49,6 +49,7 @@ target_link_libraries(FF4.elf
   ScePower_stub
   SceTouch_stub
   SceVshBridge_stub
+  SceAvPlayer_stub
   OpenSLES
   sndfile
   SDL

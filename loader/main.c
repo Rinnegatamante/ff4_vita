@@ -252,7 +252,10 @@ enum MethodIDs {
   LOAD_SOUND,
   GET_SAVE_DATA_PATH,
   GET_DOWNLOAD_STATE,
-  IS_SOUND_FILE_EXIST
+  IS_SOUND_FILE_EXIST,
+  PLAY_MOVIE,
+  GET_MOVIE_STATE,
+  STOP_MOVIE
 } MethodIDs;
 
 typedef struct {
@@ -286,6 +289,9 @@ static NameToMethodID name_to_method_ids[] = {
     {"getSaveDataPath", GET_SAVE_DATA_PATH},
     {"getDownloadState", GET_DOWNLOAD_STATE},
     {"isSoundFileExist", IS_SOUND_FILE_EXIST},
+    {"playMovie", PLAY_MOVIE},
+    {"getMovieState", GET_MOVIE_STATE},
+    {"stopMovie", STOP_MOVIE},
     {"getStoragePath", GET_SAVEFILENAME}, // We use same path
 };
 
@@ -377,6 +383,12 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
   case SET_FPS:
     setFPS((int32_t)args[0]);
     break;
+  case PLAY_MOVIE:
+    playMovie();
+    break;
+  case STOP_MOVIE:
+    stopMovie();
+    break;
   default:
     return;
   }
@@ -389,6 +401,8 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
     return isSoundFileExist((char *)args[0]);
   case IS_DEVICE_ANDROID_TV:
     return isDeviceAndroidTV();
+  case GET_MOVIE_STATE:
+    return getMovieState();
   default:
     return 0;
   }
@@ -1017,7 +1031,7 @@ static DynLibFunction dynlib_functions[] = {
     {"__aeabi_idivmod", (uintptr_t)&__aeabi_idivmod},
     {"__aeabi_l2d", (uintptr_t)&__aeabi_l2d},
     {"__aeabi_l2f", (uintptr_t)&__aeabi_l2f},
-	{"__aeabi_ldiv0", (uintptr_t)&__aeabi_ldiv0},
+    {"__aeabi_ldiv0", (uintptr_t)&__aeabi_ldiv0},
     {"__aeabi_ldivmod", (uintptr_t)&__aeabi_ldivmod},
     {"__aeabi_uidiv", (uintptr_t)&__aeabi_uidiv},
     {"__aeabi_uidivmod", (uintptr_t)&__aeabi_uidivmod},

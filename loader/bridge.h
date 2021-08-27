@@ -35,4 +35,8 @@ void initFont();
 
 int getCurrentLanguage();
 
+void playMovie();
+uint8_t getMovieState();
+void stopMovie();
+
 #endif
