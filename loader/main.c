@@ -112,7 +112,6 @@ void loadOptions() {
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 int _opensles_user_freq = 32000;
 static so_module ff4_mod;
-int has_low_res = 0;
 
 void *__wrap_memcpy(void *dest, const void *src, size_t n) {
   return sceClibMemcpy(dest, src, n);
@@ -427,10 +426,10 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
     return 0;
   case GET_VIEW_W:
   case GET_RES_WIDTH:
-    return has_low_res ? DEF_SCREEN_W : SCREEN_W;
+    return SCREEN_W;
   case GET_VIEW_H:
   case GET_RES_HEIGHT:
-    return has_low_res ? DEF_SCREEN_H : SCREEN_H;
+    return SCREEN_H;
   case GET_DOWNLOAD_STATE:
     return 0;
   case GET_KEY_EVENT:
@@ -760,6 +759,7 @@ int main_thread(SceSize args, void *argp) {
   memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
   sceAppUtilInit(&init_param, &boot_param);
 
+  int has_low_res = 0;
   switch (options.msaa) {
   case 0:
     has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_NONE);
@@ -771,7 +771,11 @@ int main_thread(SceSize args, void *argp) {
     has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
     break;
   }
-  
+  if (has_low_res) {
+    SCREEN_W = DEF_SCREEN_W;
+    SCREEN_H = DEF_SCREEN_H;
+  }
+
   if (options.postfx) {
     glGenTextures(1, &fb_tex);
     glBindTexture(GL_TEXTURE_2D, fb_tex);
@@ -825,7 +829,7 @@ int main_thread(SceSize args, void *argp) {
     ff4_touch(0, 0, reportNum, reportNum, coordinates[0], coordinates[1],
               coordinates[2], coordinates[3]);
     
-    ff4_render(fake_env, 0, has_low_res ? DEF_SCREEN_W : SCREEN_W);
+    ff4_render(fake_env, 0, SCREEN_W);
     if (options.postfx) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, fb_tex);
