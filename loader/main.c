@@ -66,7 +66,7 @@ void loadOptions() {
     }
   } else {
     options.res = 544;
-    options.bilinear = 1;
+    options.bilinear = 0;
     options.lang = 0;
     options.msaa = 2;
     options.redub = 0;
