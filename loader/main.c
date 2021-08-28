@@ -784,11 +784,11 @@ int main_thread(SceSize args, void *argp) {
     vert = glCreateShader(GL_VERTEX_SHADER);
     char path[512];
     SceIoDirent d;
-    SceUID fd = sceIoDopen("ux0:data/ff4/shaders");
+    SceUID fd = sceIoDopen("app0:shaders");
     while (sceIoDread(fd, &d) > 0) {
       sprintf(path, "%d_", options.postfx);
       if (strstr(d.d_name, path)) {
-        sprintf(path, "ux0:data/ff4/shaders/%s", d.d_name);
+        sprintf(path, "app0:shaders/%s", d.d_name);
         loadShader(strncmp(&d.d_name[strlen(d.d_name) - 5], "_f.cg", 5) == 0 ? 0 : 1, path);
       }
     }
