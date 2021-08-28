@@ -106,6 +106,7 @@ void loadOptions() {
 void saveOptions(void) {
   options.bilinear = bilinear_filter ? 1 : 0;
   options.redub = jap_dub ? 1 : 0;
+  options.debug_menu = debug_menu ? 1 : 0;
 
   FILE *config = fopen(CONFIG_FILE_PATH, "w+");
 
