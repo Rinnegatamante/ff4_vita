@@ -77,6 +77,7 @@ target_link_libraries(companion
   SceKernelDmacMgr_stub
   SceGxm_stub
   SceShaccCg_stub
+  SceVshBridge_stub
   SceSysmodule_stub
   SceTouch_stub
 )

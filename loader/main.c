@@ -65,7 +65,7 @@ void loadOptions() {
       else if (strcmp("debug_menu", buffer) == 0) options.debug_menu = value;
     }
   } else {
-    options.res = 544;
+    options.res = 0;
     options.bilinear = 0;
     options.lang = 0;
     options.msaa = 2;
@@ -76,15 +76,15 @@ void loadOptions() {
   }
   
   switch (options.res) {
-  case 544:
+  case 0:
     SCREEN_W = 960;
     SCREEN_H = 544;
     break;
-  case 720:
+  case 1:
     SCREEN_W = 1280;
     SCREEN_H = 725;
     break;
-  case 1080:
+  case 2:
     SCREEN_W = 1920;
     SCREEN_H = 1088;
     break;
