@@ -634,8 +634,23 @@ void initFont() {
 
   if (info != NULL)
     return;
-
-  FILE *fontFile = fopen("app0:/NotoSansJP-Regular.ttf", "rb");
+  
+  char font_path[256];
+  switch (getCurrentLanguage()) {
+  case 6:
+  case 7:
+    strcpy(font_path, "app0:/NotoSansSC-Regular.ttf");
+    break;
+  case 8:
+    strcpy(font_path, "app0:/NotoSansKR-Regular.ttf");
+    break;
+  default:
+    strcpy(font_path, "app0:/NotoSansJP-Regular.ttf");
+    break;
+  }
+  FILE *fontFile = fopen(font_path, "rb");
+  
+  // Debug
   if (!fontFile)
     fontFile = fopen("ux0:/data/ff4/NotoSansJP-Regular.ttf", "rb");
 
@@ -792,6 +807,12 @@ int getCurrentLanguage() {
     return 4;
   case SCE_SYSTEM_PARAM_LANG_SPANISH:
     return 5;
+  case SCE_SYSTEM_PARAM_LANG_CHINESE_S:
+    return 6;
+  case SCE_SYSTEM_PARAM_LANG_CHINESE_T:
+    return 7;
+  case SCE_SYSTEM_PARAM_LANG_KOREAN:
+    return 8;
   case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_BR:
   case SCE_SYSTEM_PARAM_LANG_PORTUGUESE_PT:
     return 9;

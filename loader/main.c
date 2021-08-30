@@ -103,10 +103,6 @@ void loadOptions() {
   default:
     break;  
   }
-
-  if (options.lang > 5) { // Skip unsupported languages
-    options.lang += 3;
-  }
 }
 
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
