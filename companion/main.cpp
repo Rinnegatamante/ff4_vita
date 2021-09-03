@@ -50,6 +50,13 @@ char *LanguageName[LANGUAGES_NUM] = {
   "Russian"
 };
 
+#define REDUBS_NUM 3
+char *RedubName[REDUBS_NUM] = {
+  "Auto",
+  "Japanese",
+  "English"
+};
+
 #define BATTLE_FPS_NUM 4
 char *BattleFpsName[BATTLE_FPS_NUM] = {
   "15",
@@ -72,7 +79,6 @@ typedef struct {
 config_opts options;
 
 bool bilinear_filter;
-bool jap_dub;
 bool debug_menu;
 bool swap_confirm;
 
@@ -106,14 +112,12 @@ void loadOptions() {
   }
     
   bilinear_filter = options.bilinear ? true : false;
-  jap_dub = options.redub ? true : false;
   debug_menu = options.debug_menu ? true : false;
   swap_confirm = options.swap_confirm ? true : false;
 }
 
 void saveOptions(void) {
   options.bilinear = bilinear_filter ? 1 : 0;
-  options.redub = jap_dub ? 1 : 0;
   options.debug_menu = debug_menu ? 1 : 0;
   options.swap_confirm = swap_confirm ? 1 : 0;
 
@@ -138,7 +142,7 @@ char *options_descs[] = {
   "When enabled, forces bilinear filtering for all game's textures.\nThe default value is: Disabled.", // bilinear
   "Anti-Aliasing is a technique used to reduce graphical artifacts surrounding 3D models. Greatly improves graphics quality at the cost of some GPU power.\nThe default value is: MSAA 4x.", // antialiasing
   "Language to use for the game. When Auto is used, language will be decided based on system language.\nThe default value is: Auto.", // language
-  "When enabled, original japanese dub will be used for cutscenes.\nThe default value is: Disabled.", // undub
+  "Language to use for voice dubs. When Auto is used, language will be decided based on game language.\nThe default value is: Auto.", // undub
   "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled.", // postfx
   "Alters the game framerate during battles.\nThe default value is: 15.", // battle_fps
   "When enabled, internal development debug menu is accessible by pressing SELECT + UP/DOWN.\nThe default value is: Disabled.", // debug_menu
@@ -263,7 +267,7 @@ int main(int argc, char *argv[]) {
     ImGui::Separator();
     ImGui::TextColored(ImVec4(255, 255, 0, 255), "Misc");
 
-    ImGui::Text("Language:"); ImGui::SameLine();
+    ImGui::Text("Text Language:"); ImGui::SameLine();
     if (ImGui::BeginCombo("##combo3", LanguageName[options.lang])) {
       for (int n = 0; n < LANGUAGES_NUM; n++) {
         bool is_selected = options.lang == n;
@@ -277,11 +281,19 @@ int main(int argc, char *argv[]) {
     }
     SetDescription(OPT_LANGUAGE);
     
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-    ImGui::Text("Japanese Dub:"); ImGui::SameLine();
-    ImGui::Checkbox("##check1", &jap_dub);
+    ImGui::Text("Voice Language:"); ImGui::SameLine();
+    if (ImGui::BeginCombo("##combo3", RedubName[options.redub])) {
+      for (int n = 0; n < REDUBS_NUM; n++) {
+        bool is_selected = options.redub == n;
+        if (ImGui::Selectable(LanguageName[n], is_selected))
+          options.redub = n;
+        SetDescription(OPT_UNDUB);
+        if (is_selected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndCombo();
+    }
     SetDescription(OPT_UNDUB);
-    ImGui::PopStyleVar();
 
     ImGui::Text("FPS in Battle:"); ImGui::SameLine();
     if (ImGui::BeginCombo("##combo4", BattleFpsName[options.battle_fps])) {

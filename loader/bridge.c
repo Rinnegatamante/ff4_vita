@@ -192,7 +192,7 @@ void movie_player_init() {
   glBindAttribLocation(movie_prog, 0, "inPos");
   glBindAttribLocation(movie_prog, 1, "inTex");
   glLinkProgram(movie_prog);
-	
+
   movie_player_inited = 1;
 }
 
@@ -486,10 +486,17 @@ jni_bytearray *loadSound(char *str) {
   if (strlen(str) == 0 || !strstr(str, "voice/")) {
     sprintf(str2, "%s.akb", str);
   } else {
-    if (options.redub)
+    switch (options.redub) {
+    case 1: // Jap
       sprintf(str2, "ja%s", &str[8]);
-    else
+      break;
+    case 2: // Eng
+      sprintf(str2, "en%s", &str[8]);
+      break;
+    default: // Auto
       sprintf(str2, "%s", &str[6]);
+      break;
+    }
   }
   
   sprintf(path, "files/SOUND/BGM/%s", str2);
@@ -518,10 +525,17 @@ uint8_t isSoundFileExist(char *str) {
   if (strlen(str) == 0 || !strstr(str, "voice/")) {
     sprintf(str2, "%s.akb", str);
   } else {
-    if (options.redub)
+    switch (options.redub) {
+    case 1: // Jap
       sprintf(str2, "ja%s", &str[8]);
-    else
+      break;
+    case 2: // Eng
+      sprintf(str2, "en%s", &str[8]);
+      break;
+    default: // Auto
       sprintf(str2, "%s", &str[6]);
+      break;
+    }
   }
   
   sprintf(path, "files/SOUND/BGM/%s", str2);

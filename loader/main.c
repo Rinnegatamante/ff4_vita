@@ -19,7 +19,7 @@
 #include <vitaGL.h>
 #include <vitashark.h>
 
-#include <OpenSLES.h>
+#include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
 #include <arm_neon.h>
