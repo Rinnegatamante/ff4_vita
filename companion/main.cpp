@@ -67,12 +67,14 @@ typedef struct {
   int postfx;
   int battle_fps;
   int debug_menu;
+  int swap_confirm;
 } config_opts;
 config_opts options;
 
 bool bilinear_filter;
 bool jap_dub;
 bool debug_menu;
+bool swap_confirm;
 
 void loadOptions() {
   char buffer[30];
@@ -87,8 +89,9 @@ void loadOptions() {
       else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
       else if (strcmp("undub", buffer) == 0) options.redub = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
-	  else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
+      else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
       else if (strcmp("debug_menu", buffer) == 0) options.debug_menu = value;
+      else if (strcmp("swap_confirm", buffer) == 0) options.swap_confirm = value;
     }
   } else {
     options.res = 0;
@@ -97,19 +100,22 @@ void loadOptions() {
     options.msaa = 2;
     options.redub = 0;
     options.postfx = 0;
-	options.battle_fps = 0;
-	options.debug_menu = 0;
+    options.battle_fps = 0;
+    options.debug_menu = 0;
+    options.swap_confirm = 0;
   }
     
   bilinear_filter = options.bilinear ? true : false;
   jap_dub = options.redub ? true : false;
   debug_menu = options.debug_menu ? true : false;
+  swap_confirm = options.swap_confirm ? true : false;
 }
 
 void saveOptions(void) {
   options.bilinear = bilinear_filter ? 1 : 0;
   options.redub = jap_dub ? 1 : 0;
   options.debug_menu = debug_menu ? 1 : 0;
+  options.swap_confirm = swap_confirm ? 1 : 0;
 
   FILE *config = fopen(CONFIG_FILE_PATH, "w+");
 
@@ -122,6 +128,7 @@ void saveOptions(void) {
     fprintf(config, "%s=%d\n", "postfx", options.postfx);
     fprintf(config, "%s=%d\n", "battle_fps", options.battle_fps);
     fprintf(config, "%s=%d\n", "debug_menu", options.debug_menu);
+    fprintf(config, "%s=%d\n", "swap_confirm", options.swap_confirm);
     fclose(config);
   }
 }
@@ -134,7 +141,8 @@ char *options_descs[] = {
   "When enabled, original japanese dub will be used for cutscenes.\nThe default value is: Disabled.", // undub
   "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled.", // postfx
   "Alters the game framerate during battles.\nThe default value is: 15.", // battle_fps
-  "When enabled, internal development debug menu is accessible by pressing SELECT + UP/DOWN.\nThe default value is: Disabled." // debug_menu
+  "When enabled, internal development debug menu is accessible by pressing SELECT + UP/DOWN.\nThe default value is: Disabled.", // debug_menu
+  "When enabled, functionalities of X and O buttons are swapped.\nThe default value is: Disabled." // swap_confirm
 };
 
 enum {
@@ -145,7 +153,8 @@ enum {
   OPT_UNDUB,
   OPT_POSTFX,
   OPT_BATTLE_FPS,
-  OPT_DEBUG_MENU
+  OPT_DEBUG_MENU,
+  OPT_CONFIRM_SWAP
 };
 
 char *desc = nullptr;
@@ -181,9 +190,9 @@ int main(int argc, char *argv[]) {
     int n;
     char name[64];
     sscanf(d.d_name, "%d_%s", &n, name);
-	strcpy(name, strchr(d.d_name, '_') + 1);
-	char *end_of_name = strchr(name, '_');
-	end_of_name[0] = 0;
+    strcpy(name, strchr(d.d_name, '_') + 1);
+    char *end_of_name = strchr(name, '_');
+    end_of_name[0] = 0;
     if (PostFxName[n] == NULL) {
       PostFxName[n] = (char *)malloc(strlen(name) + 1);
       strcpy(PostFxName[n], name);
@@ -273,8 +282,8 @@ int main(int argc, char *argv[]) {
     ImGui::Checkbox("##check1", &jap_dub);
     SetDescription(OPT_UNDUB);
     ImGui::PopStyleVar();
-	
-	ImGui::Text("FPS in Battle:"); ImGui::SameLine();
+
+    ImGui::Text("FPS in Battle:"); ImGui::SameLine();
     if (ImGui::BeginCombo("##combo4", BattleFpsName[options.battle_fps])) {
       for (int n = 0; n < BATTLE_FPS_NUM; n++) {
         bool is_selected = options.battle_fps == n;
@@ -287,11 +296,15 @@ int main(int argc, char *argv[]) {
       ImGui::EndCombo();
     }
     SetDescription(OPT_BATTLE_FPS);
-	
+
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
     ImGui::Text("Debug Menu:"); ImGui::SameLine();
     ImGui::Checkbox("##check2", &debug_menu);
     SetDescription(OPT_DEBUG_MENU);
+
+    ImGui::Text("Swap Confirm Button:"); ImGui::SameLine();
+    ImGui::Checkbox("##check3", &swap_confirm);
+    SetDescription(OPT_CONFIRM_SWAP);
     ImGui::PopStyleVar();
     
     ImGui::Separator();

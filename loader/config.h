@@ -22,6 +22,7 @@ typedef struct {
   int postfx;
   int battle_fps;
   int debug_menu;
+  int swap_confirm;
 } config_opts;
 extern config_opts options;
 

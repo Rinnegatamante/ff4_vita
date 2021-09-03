@@ -63,6 +63,7 @@ void loadOptions() {
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
       else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
       else if (strcmp("debug_menu", buffer) == 0) options.debug_menu = value;
+      else if (strcmp("swap_confirm", buffer) == 0) options.swap_confirm = value;
     }
   } else {
     options.res = 0;
@@ -73,6 +74,7 @@ void loadOptions() {
     options.postfx = 0;
     options.battle_fps = 0;
     options.debug_menu = 0;
+    options.swap_confirm = 0;
   }
   
   switch (options.res) {
@@ -202,9 +204,9 @@ int getKeyEvent() {
   if (pad.buttons & SCE_CTRL_R1)
     mask |= 0x800;
   if (pad.buttons & SCE_CTRL_CROSS)
-    mask |= 0x1;
+    mask |= (options.swap_confirm ? 0x2 : 0x1);
   if (pad.buttons & SCE_CTRL_CIRCLE)
-    mask |= 0x2;
+    mask |= (options.swap_confirm ? 0x1 : 0x2);
   if (pad.buttons & SCE_CTRL_START)
     mask |= 0x8;
   if (pad.buttons & SCE_CTRL_SELECT)
