@@ -34,6 +34,8 @@ target_link_libraries(FF4.elf
   stdc++
   vitaGL
   vitashark
+  SceShaccCgExt
+  taihen_stub
   mathneon
   kubridge_stub
   SceAppMgr_stub
@@ -52,6 +54,11 @@ target_link_libraries(FF4.elf
   SceAvPlayer_stub
   OpenSLES
   sndfile
+  flac
+  vorbisfile
+  vorbis
+  vorbisenc
+  ogg
   SDL
   SceHid_stub
   z
@@ -68,6 +75,8 @@ target_link_libraries(companion
   imgui
   vitaGL
   vitashark
+  SceShaccCgExt
+  taihen_stub
   mathneon
   SceAppMgr_stub
   SceAudio_stub
@@ -105,4 +114,6 @@ vita_create_vpk(FF4.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/shaders/3_Sepia_v.cg shaders/3_Sepia_v.cg
        ${CMAKE_SOURCE_DIR}/shaders/4_Greyscale_f.cg shaders/4_Greyscale_f.cg
        ${CMAKE_SOURCE_DIR}/shaders/4_Greyscale_v.cg shaders/4_Greyscale_v.cg
+       ${CMAKE_SOURCE_DIR}/shaders/5_CRT_f.cg shaders/5_CRT.cg
+       ${CMAKE_SOURCE_DIR}/shaders/5_CRT.cg shaders/5_CRT.cg
 )
