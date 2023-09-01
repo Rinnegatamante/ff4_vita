@@ -20,6 +20,10 @@
 #include "so_util.h"
 #include "config.h"
 
+#ifndef SCE_KERNEL_MEMBLOCK_TYPE_USER_RX
+#define SCE_KERNEL_MEMBLOCK_TYPE_USER_RX                 (0x0C20D050)
+#endif
+
 void hook_thumb(uintptr_t addr, uintptr_t dst) {
   if (addr == 0)
     return;
