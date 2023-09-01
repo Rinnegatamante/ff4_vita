@@ -7,6 +7,32 @@ This is a wrapper/port of *Final Fantasy 4 Android* for the *PS Vita*.
 The port works by loading the official Android ARMv7 executable in memory, resolving its imports with native functions and patching it in order to properly run.
 By doing so, it's basically as if we emulate a minimalist Android environment in which we run natively the executable as is.
 
+## Changelog
+### v.1.3
+- Updated to latest vitaGL commit.
+- Updated to latest so loader revision.
+- Made game patches version agnostic (potential more recent game updates support).
+- Added CRT PostFX effect.
+- Added trophies support.
+
+### v.1.2
+- Updated to latest vitaShaRK commit. (Fixes some memory leaks and reduces overhaul memory usage)
+- Updated to latest vitaGL commit.
+- Added an option to swap O and X buttons functionalities.
+- Added possibility to force english dub usage.
+
+### v.1.1
+- Fixed an issue causing the game to crash with plugins hooking sceDisplaySetFrameBuf.
+- Set Bilinear Filtering to Disabled by default cause it causes some minor artifacting with textures.
+- Fixed an issue causing text input keyboard to partially glitch when a PostFX effect was being used.
+- Fixed the Debug Menu option in the Configurator app. Now it can be correctly enabled.
+- Fixed higher resolutions (720p,/1080i) support. Now works as intended.
+- Added support for Simplified Chinese, Traditional Chinese and Korean languages.
+
+
+### v.1.0
+- First Release
+
 ## Setup Instructions (For End Users)
 
 In order to properly install the game, you'll have to follow these steps precisely:

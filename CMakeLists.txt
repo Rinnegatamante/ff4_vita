@@ -25,6 +25,8 @@ add_executable(FF4.elf
   loader/bridge.c
   loader/stb_image.c
   loader/stb_truetype.c
+  loader/trophies.c
+  loader/base64.cpp
 )
 
 add_dependencies(FF4.elf companion.bin)
@@ -51,6 +53,7 @@ target_link_libraries(FF4.elf
   ScePower_stub
   SceTouch_stub
   SceVshBridge_stub
+  SceNpTrophy_stub
   SceAvPlayer_stub
   OpenSLES
   sndfile
@@ -102,6 +105,7 @@ vita_create_vpk(FF4.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/config.png sce_sys/livearea/contents/config.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+	   ${CMAKE_SOURCE_DIR}/sce_sys/trophy/FFIV00001_00/TROPHY.TRP sce_sys/trophy/FFIV00001_00/TROPHY.TRP
        ${CMAKE_SOURCE_DIR}/NotoSansJP-Regular.ttf NotoSansJP-Regular.ttf
        ${CMAKE_SOURCE_DIR}/NotoSansSC-Regular.ttf NotoSansSC-Regular.ttf
        ${CMAKE_SOURCE_DIR}/NotoSansKR-Regular.ttf NotoSansKR-Regular.ttf
@@ -114,6 +118,6 @@ vita_create_vpk(FF4.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/shaders/3_Sepia_v.cg shaders/3_Sepia_v.cg
        ${CMAKE_SOURCE_DIR}/shaders/4_Greyscale_f.cg shaders/4_Greyscale_f.cg
        ${CMAKE_SOURCE_DIR}/shaders/4_Greyscale_v.cg shaders/4_Greyscale_v.cg
-       ${CMAKE_SOURCE_DIR}/shaders/5_CRT_f.cg shaders/5_CRT.cg
-       ${CMAKE_SOURCE_DIR}/shaders/5_CRT.cg shaders/5_CRT.cg
+       ${CMAKE_SOURCE_DIR}/shaders/5_CRT_f.cg shaders/5_CRT_f.cg
+       ${CMAKE_SOURCE_DIR}/shaders/5_CRT_v.cg shaders/5_CRT_v.cg
 )

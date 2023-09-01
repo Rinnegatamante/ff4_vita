@@ -584,6 +584,14 @@ void createSaveFile(size_t size) {
   free(buffer);
 }
 
+void createAchieveFile(size_t size) {
+	char *buffer = malloc(size);
+	FILE *fd = fopen(SAVE_FILENAME "/report_achi.bin", "wb");
+	fwrite(buffer, sizeof(char), size, fd);
+	fclose(fd);
+	free(buffer);
+}
+
 uint64_t j3 = 0;
 int32_t framerate = 30;
 

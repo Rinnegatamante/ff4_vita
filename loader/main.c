@@ -41,8 +41,8 @@
 #include "bridge.h"
 #include "config.h"
 #include "dialog.h"
-#include "main.h"
 #include "so_util.h"
+#include "trophies.h"
 
 int SCREEN_W = DEF_SCREEN_W;
 int SCREEN_H = DEF_SCREEN_H;
@@ -252,7 +252,9 @@ enum MethodIDs {
 	IS_SOUND_FILE_EXIST,
 	PLAY_MOVIE,
 	GET_MOVIE_STATE,
-	STOP_MOVIE
+	STOP_MOVIE,
+	CREATE_ACHIEVE_FILE,
+	UNLOCK_ACHIEVEMENT
 } MethodIDs;
 
 typedef struct {
@@ -261,41 +263,42 @@ typedef struct {
 } NameToMethodID;
 
 static NameToMethodID name_to_method_ids[] = {
-		{"getCurrentFrame", GET_CURRENT_FRAME},
-		{"loadFile", LOAD_FILE},
-		{"loadRawFile", LOAD_RAW_FILE},
-		{"getLanguage", GET_LANGUAGE},
-		{"getSaveFileName", GET_SAVEFILENAME},
-		{"createSaveFile", CREATE_SAVEFILE},
-		{"loadTexture", LOAD_TEXTURE},
-		{"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
-		{"drawFont", DRAW_FONT},
-		{"createEditText", CREATE_EDIT_TEXT},
-		{"getEditText", GET_EDIT_TEXT},
-		{"getResWidth", GET_RES_WIDTH},
-		{"getResHeight", GET_RES_HEIGHT},
-		{"getViewPosX", GET_VIEW_X},
-		{"getViewPosY", GET_VIEW_Y},
-		{"getViewWidth", GET_VIEW_W},
-		{"getViewHeight", GET_VIEW_H},
-		{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
-		{"setFPS", SET_FPS},
-		{"isOKAchievement", IS_OK_ACHIEVEMENT},
-		{"getKeyEvent", GET_KEY_EVENT},
-		{"loadSound", LOAD_SOUND},
-		{"getSaveDataPath", GET_SAVE_DATA_PATH},
-		{"getDownloadState", GET_DOWNLOAD_STATE},
-		{"isSoundFileExist", IS_SOUND_FILE_EXIST},
-		{"playMovie", PLAY_MOVIE},
-		{"getMovieState", GET_MOVIE_STATE},
-		{"stopMovie", STOP_MOVIE},
-		{"getStoragePath", GET_SAVEFILENAME}, // We use same path
+	{"getCurrentFrame", GET_CURRENT_FRAME},
+	{"loadFile", LOAD_FILE},
+	{"loadRawFile", LOAD_RAW_FILE},
+	{"getLanguage", GET_LANGUAGE},
+	{"getSaveFileName", GET_SAVEFILENAME},
+	{"createSaveFile", CREATE_SAVEFILE},
+	{"loadTexture", LOAD_TEXTURE},
+	{"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
+	{"drawFont", DRAW_FONT},
+	{"createEditText", CREATE_EDIT_TEXT},
+	{"getEditText", GET_EDIT_TEXT},
+	{"getResWidth", GET_RES_WIDTH},
+	{"getResHeight", GET_RES_HEIGHT},
+	{"getViewPosX", GET_VIEW_X},
+	{"getViewPosY", GET_VIEW_Y},
+	{"getViewWidth", GET_VIEW_W},
+	{"getViewHeight", GET_VIEW_H},
+	{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
+	{"setFPS", SET_FPS},
+	{"isOKAchievement", IS_OK_ACHIEVEMENT},
+	{"getKeyEvent", GET_KEY_EVENT},
+	{"loadSound", LOAD_SOUND},
+	{"getSaveDataPath", GET_SAVE_DATA_PATH},
+	{"getDownloadState", GET_DOWNLOAD_STATE},
+	{"isSoundFileExist", IS_SOUND_FILE_EXIST},
+	{"playMovie", PLAY_MOVIE},
+	{"getMovieState", GET_MOVIE_STATE},
+	{"stopMovie", STOP_MOVIE},
+	{"getStoragePath", GET_SAVEFILENAME}, // We use same path
+	{"createAchieveFile", CREATE_ACHIEVE_FILE},
+	{"unlockAchievement", UNLOCK_ACHIEVEMENT},
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
 
-	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
-			 i++) {
+	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID); i++) {
 		if (strcmp(name, name_to_method_ids[i].name) == 0)
 			return name_to_method_ids[i].id;
 	}
@@ -306,8 +309,7 @@ int GetMethodID(void *env, void *class, const char *name, const char *sig) {
 int GetStaticMethodID(void *env, void *class, const char *name,
 											const char *sig) {
 
-	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
-			 i++) {
+	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID); i++) {
 		if (strcmp(name, name_to_method_ids[i].name) == 0)
 			return name_to_method_ids[i].id;
 	}
@@ -341,8 +343,7 @@ void CallVoidMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	return;
 }
 
-void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
-															uintptr_t *args) {
+void *CallStaticObjectMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	switch (methodID) {
 	case LOAD_FILE:
 		return loadFile((char *)args[0]);
@@ -365,8 +366,11 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
 	}
 }
 
-void CallStaticVoidMethodV(void *env, void *obj, int methodID,
-													 uintptr_t *args) {
+char *b64decode(const void* data, const size_t len);
+
+void CallStaticVoidMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
+	char *decoded;
+	
 	switch (methodID) {
 	case CREATE_SAVEFILE:
 		createSaveFile((size_t)args[0]);
@@ -386,14 +390,27 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
 	case STOP_MOVIE:
 		stopMovie();
 		break;
+	case CREATE_ACHIEVE_FILE:
+		createAchieveFile((size_t)args[0]);
+		break;
+	case UNLOCK_ACHIEVEMENT:
+		decoded = b64decode(args[0], strlen(args[0]));
+		if (decoded[12] == 0) // 0 on Vita is Plat, first achievement is 1
+			trophies_unlock(1);
+		else if (decoded[12] == 1) // For some reason ach_058 is ID 1 on Android
+			trophies_unlock(57);
+		else if (decoded[12] != 57) // ach_057 is the Plat, that is automatically handled by sceNpTrophy
+			trophies_unlock(decoded[12]);
+		break;
 	default:
 		return;
 	}
 }
 
-int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
-														 uintptr_t *args) {
+int CallStaticBooleanMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	switch (methodID) {
+	case IS_OK_ACHIEVEMENT:
+		return 1;
 	case IS_SOUND_FILE_EXIST:
 		return isSoundFileExist((char *)args[0]);
 	case IS_DEVICE_ANDROID_TV:
@@ -405,8 +422,7 @@ int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
 	}
 }
 
-uint64_t CallStaticLongMethodV(void *env, void *obj, int methodID,
-															 uintptr_t *args) {
+uint64_t CallStaticLongMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	switch (methodID) {
 	case GET_CURRENT_FRAME:
 		return getCurrentFrame((uint64_t)args[0]);
@@ -762,10 +778,22 @@ int main_thread(SceSize args, void *argp) {
 		has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
 		break;
 	}
+	
+	// Initing trophy system
+	SceIoStat st;
+	int r = trophies_init();
+	if (r < 0 && sceIoGetstat(TROPHIES_FILE, &st) < 0) {
+		FILE *f = fopen(TROPHIES_FILE, "w");
+		fclose(f);
+		warning("This game features unlockable trophies but NoTrpDrm is not installed. If you want to be able to unlock trophies, please install it.");
+	}
+	
 	if (has_low_res) {
 		SCREEN_W = DEF_SCREEN_W;
 		SCREEN_H = DEF_SCREEN_H;
 	}
+	
+	sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
 
 	int time_unif = -1;
 	if (options.postfx) {
@@ -865,13 +893,17 @@ int16_t FX_AtanIdx(int a1) {
 	return r;
 }
 
+char *getArchiveFilePath(void *this) {
+	return "ux0:data/ff4/report_achi.bin";
+}
+
 void patch_game(void) {
 	if (!options.debug_menu)
-		hook_thumb(ff4_mod.text_base + 0x246eec, (uintptr_t)&ret0);
-
-	hook_thumb(ff4_mod.text_base + 0x149590, (uintptr_t)&FX_AtanIdx);
+		hook_addr(so_symbol(&ff4_mod, "_ZN5debug6DGMenu4openEv"), (uintptr_t)&ret0);
+	hook_addr(so_symbol(&ff4_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), getArchiveFilePath);
+	hook_addr(so_symbol(&ff4_mod, "_Z10FX_AtanIdxi"), (uintptr_t)&FX_AtanIdx);
 #ifdef DEBUG
-	hook_thumb(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
+	hook_addr(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);
 #endif
 }
 
@@ -953,7 +985,7 @@ void glTexParameteriHook(GLenum target, GLenum pname, GLint param) {
 	glTexParameteri(target, pname, param);
 }
 
-static DynLibFunction dynlib_functions[] = {
+static so_default_dynlib dynlib_functions[] = {
 		{"AAssetManager_open", (uintptr_t)&AAssetManager_open},
 		{"AAsset_close", (uintptr_t)&AAsset_close},
 		{"AAssetManager_fromJava", (uintptr_t)&AAssetManager_fromJava},
@@ -1186,6 +1218,7 @@ int file_exists(const char *path) {
 }*/
 
 int main(int argc, char *argv[]) {
+	printf("Starting app\n");
 	// Check if we want to start the companion app
 	sceAppUtilInit(&(SceAppUtilInitParam){}, &(SceAppUtilBootParam){});
 	SceAppUtilAppEventParam eventParam;
@@ -1200,7 +1233,6 @@ int main(int argc, char *argv[]) {
 
 	loadOptions();
 	//sceSysmoduleLoadModule(9); // Razor Capture
-	sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
 	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
 
 	//SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
@@ -1220,17 +1252,18 @@ int main(int argc, char *argv[]) {
 
 	InitJNIEnv();
 
-	if (so_load(&ff4_mod, SO_PATH) < 0)
+	if (so_file_load(&ff4_mod, SO_PATH, 0x98000000) < 0)
 		fatal_error("Error could not load %s.", SO_PATH);
 
 	so_relocate(&ff4_mod);
-	so_resolve(&ff4_mod, dynlib_functions, sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
+	so_resolve(&ff4_mod, dynlib_functions, sizeof(dynlib_functions), 1);
 
 	patch_game();
 	so_flush_caches(&ff4_mod);
 
 	so_initialize(&ff4_mod);
 
+	printf("Starting main thread\n");
 	SceUID thid = sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread, 0x40, 1024 * 1024, 0, 0, NULL);
 	sceKernelStartThread(thid, 0, NULL);
 	return sceKernelExitDeleteThread(0);

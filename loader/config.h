@@ -3,12 +3,13 @@
 
 #define LOAD_ADDRESS 0x98000000
 
-#define MEMORY_NEWLIB_MB 280
+#define MEMORY_NEWLIB_MB 256
 #define MEMORY_VITAGL_THRESHOLD_MB 8
 
 #define DATA_PATH "ux0:data/ff4"
 #define SO_PATH DATA_PATH "/" "libff4.so"
 #define CONFIG_FILE_PATH "ux0:data/ff4/options.cfg"
+#define TROPHIES_FILE "ux0:data/ff4/trophies.chk"
 
 #define DEF_SCREEN_W 960
 #define DEF_SCREEN_H 544
