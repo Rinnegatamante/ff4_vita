@@ -8,6 +8,10 @@
 
 #include <kubridge.h>
 #include <psp2/apputil.h>
+#include <psp2/appmgr.h>
+#include <psp2/io/stat.h>
+#include <psp2/kernel/processmgr.h>
+#include <psp2/vshbridge.h>
 #include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/dirent.h>
@@ -394,7 +398,7 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID, uintptr_t *args) 
 		createAchieveFile((size_t)args[0]);
 		break;
 	case UNLOCK_ACHIEVEMENT:
-		decoded = b64decode(args[0], strlen(args[0]));
+		decoded = b64decode((const void *)args[0], strlen((const char *)args[0]));
 		if (decoded[12] == 0) // 0 on Vita is Plat, first achievement is 1
 			trophies_unlock(1);
 		else if (decoded[12] == 1) // For some reason ach_058 is ID 1 on Android
@@ -736,7 +740,8 @@ void loadShader(int is_vertex, char *file) {
 
 	GLint len = st.st_size - 1;
 	GLuint shad = is_vertex ? vert : frag;
-	glShaderSource(shad, 1, &code, &len);
+	const GLchar *shader_code = code;
+	glShaderSource(shad, 1, &shader_code, &len);
 	glCompileShader(shad);
 
 	free(code);
@@ -900,7 +905,7 @@ char *getArchiveFilePath(void *this) {
 void patch_game(void) {
 	if (!options.debug_menu)
 		hook_addr(so_symbol(&ff4_mod, "_ZN5debug6DGMenu4openEv"), (uintptr_t)&ret0);
-	hook_addr(so_symbol(&ff4_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), getArchiveFilePath);
+	hook_addr(so_symbol(&ff4_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), (uintptr_t)getArchiveFilePath);
 	hook_addr(so_symbol(&ff4_mod, "_Z10FX_AtanIdxi"), (uintptr_t)&FX_AtanIdx);
 #ifdef DEBUG
 	hook_addr(ff4_mod.text_base + 0x149386, (uintptr_t)&printf);

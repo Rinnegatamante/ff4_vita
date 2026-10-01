@@ -10,6 +10,10 @@ endif()
 
 project(FF4.elf C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(sndfile REQUIRED IMPORTED_TARGET sndfile)
+pkg_check_modules(sdl REQUIRED IMPORTED_TARGET sdl)
+pkg_check_modules(vorbisfile REQUIRED IMPORTED_TARGET vorbisfile)
 set(VITA_APP_NAME "Final Fantasy IV")
 set(VITA_TITLEID  "FF4000000")
 set(VITA_VERSION  "01.00")
@@ -29,9 +33,19 @@ add_executable(FF4.elf
   loader/base64.cpp
 )
 
-add_dependencies(FF4.elf companion.bin)
+if(CMAKE_VERSION VERSION_LESS "3.20.0")
+  add_dependencies(FF4.elf companion.bin)
+else()
+  add_dependencies(FF4.elf companion.bin-self)
+endif()
+
 
 target_link_libraries(FF4.elf
+  -pthread
+  -Wl,--start-group
+  PkgConfig::sndfile
+  PkgConfig::sdl
+  PkgConfig::vorbisfile
   m
   stdc++
   vitaGL
@@ -57,7 +71,7 @@ target_link_libraries(FF4.elf
   SceAvPlayer_stub
   OpenSLES
   sndfile
-  flac
+  FLAC
   vorbisfile
   vorbis
   vorbisenc
@@ -65,9 +79,7 @@ target_link_libraries(FF4.elf
   SDL
   SceHid_stub
   z
-  -Wl,--whole-archive
-  pthread
-  -Wl,--no-whole-archive
+  -Wl,--end-group
 )
 
 add_executable(companion
@@ -75,6 +87,7 @@ add_executable(companion
 )
 
 target_link_libraries(companion
+  -Wl,--start-group
   imgui
   vitaGL
   vitashark
@@ -92,6 +105,8 @@ target_link_libraries(companion
   SceVshBridge_stub
   SceSysmodule_stub
   SceTouch_stub
+  SceAppUtil_stub
+  -Wl,--end-group
 )
 
 vita_create_self(companion.bin companion UNSAFE)
@@ -121,3 +136,5 @@ vita_create_vpk(FF4.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/shaders/5_CRT_f.cg shaders/5_CRT_f.cg
        ${CMAKE_SOURCE_DIR}/shaders/5_CRT_v.cg shaders/5_CRT_v.cg
 )
+
+set_property(SOURCE loader/so_util.c APPEND PROPERTY COMPILE_OPTIONS -Wno-error=return-mismatch -Wno-error=incompatible-pointer-types)
